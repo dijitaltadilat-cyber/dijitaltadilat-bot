@@ -3,8 +3,9 @@ import json
 import urllib.request
 import urllib.error
 
-instagram_account_id = os.environ.get("INSTAGRAM_ACCOUNT_ID")
-access_token = os.environ.get("ACCESS_TOKEN")
+# .strip() ekleyerek kopyalamadan kaynaklı gizli alt satır (\n) karakterlerini temizliyoruz
+instagram_account_id = (os.environ.get("INSTAGRAM_ACCOUNT_ID") or "").strip()
+access_token = (os.environ.get("ACCESS_TOKEN") or "").strip()
 
 if not instagram_account_id or not access_token:
     print("HATA: INSTAGRAM_ACCOUNT_ID veya ACCESS_TOKEN gizli anahtarı bulunamadı!")

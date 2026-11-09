@@ -37,7 +37,17 @@ def _clean(v):
 
 
 INSTAGRAM_ACCOUNT_ID = _clean(os.getenv("INSTAGRAM_ACCOUNT_ID"))
-ACCESS_TOKEN = _clean(os.getenv("ACCESS_TOKEN"))
+def _extract_token(v):
+    """Yanlışlıkla JSON parçasıyla yapıştırılırsa içindeki EAA... token'ını alır."""
+    import re
+    v = _clean(v)
+    if not v:
+        return None
+    m = re.search(r"EAA[A-Za-z0-9]+", v)
+    return m.group(0) if m else v
+
+
+ACCESS_TOKEN = _extract_token(os.getenv("ACCESS_TOKEN"))
 REPO = os.getenv("GITHUB_REPOSITORY", "dijitaltadilat-cyber/dijitaltadilat-bot")
 
 

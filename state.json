@@ -1,6 +1,6 @@
 {
   "post": 7,
-  "reel": 1,
+  "reel": 2,
   "history": [
     {
       "time": "2026-11-09T03:38+03:00",
@@ -57,6 +57,13 @@
       "index": 0,
       "district": "Karabağlar",
       "media_id": "18193087963404156"
+    },
+    {
+      "time": "2026-11-09T05:19+03:00",
+      "kind": "reel",
+      "index": 1,
+      "district": "Gaziemir",
+      "media_id": "18093339467690916"
     }
   ]
 }

@@ -256,6 +256,27 @@ def main():
     git("commit", "-m", f"Paylaşıldı: {args.kind} #{idx} ({district['name']})")
     git("push")
     print("=== Tamamlandı ===")
+    warn_if_token_expiring()
+
+
+def warn_if_token_expiring(days=10):
+    """Token bitimine az kaldıysa paylaşımdan SONRA hata verir; GitHub e-posta atar."""
+    try:
+        r = requests.get(f"{BASE_URL}/debug_token",
+                         params={"input_token": ACCESS_TOKEN, "access_token": ACCESS_TOKEN},
+                         timeout=30)
+        exp = r.json().get("data", {}).get("expires_at")
+    except Exception as e:  # kontrol başarısızsa paylaşımı etkilemesin
+        print(f"(Token süresi kontrol edilemedi: {e})")
+        return
+    if not exp:
+        print("🔑 Token süresiz.")
+        return
+    left = (datetime.fromtimestamp(exp, timezone.utc) - datetime.now(timezone.utc)).days
+    print(f"🔑 Token'ın bitmesine {left} gün var.")
+    if left <= days:
+        fail(f"UYARI: Instagram token'ı {left} gün içinde bitecek! Paylaşım yapıldı ama "
+             "token yenilenmezse bot duracak. Claude'a 'token yenileyelim' yaz.")
 
 
 if __name__ == "__main__":

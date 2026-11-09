@@ -31,8 +31,13 @@ STATE_PATH = os.path.join(ROOT, "state.json")
 MEDIA_DIR = os.path.join(ROOT, "media")
 TR = timezone(timedelta(hours=3))
 
-INSTAGRAM_ACCOUNT_ID = os.getenv("INSTAGRAM_ACCOUNT_ID")
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+def _clean(v):
+    """Yapıştırırken kalan boşluk, tırnak ve virgülleri temizler."""
+    return (v or "").strip().strip('"\'').strip(",").strip().strip('"\'') or None
+
+
+INSTAGRAM_ACCOUNT_ID = _clean(os.getenv("INSTAGRAM_ACCOUNT_ID"))
+ACCESS_TOKEN = _clean(os.getenv("ACCESS_TOKEN"))
 REPO = os.getenv("GITHUB_REPOSITORY", "dijitaltadilat-cyber/dijitaltadilat-bot")
 
 

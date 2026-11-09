@@ -1,6 +1,6 @@
 {
   "post": 7,
-  "reel": 2,
+  "reel": 3,
   "history": [
     {
       "time": "2026-11-09T03:38+03:00",
@@ -64,6 +64,13 @@
       "index": 1,
       "district": "Gaziemir",
       "media_id": "18093339467690916"
+    },
+    {
+      "time": "2026-11-09T05:20+03:00",
+      "kind": "reel",
+      "index": 2,
+      "district": "Narlıdere",
+      "media_id": "17951335908349484"
     }
   ]
 }

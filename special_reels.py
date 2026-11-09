@@ -259,7 +259,8 @@ def audio_duration(path):
 
 
 def render_photo_version(out):
-    total = audio_duration(ANONS)
+    adur = audio_duration(ANONS)
+    total = adur + 7.0  # anons bitince anma metni ve kapanış için süre
     src = Image.open(PHOTO).convert("RGB")
     # dikey kadraj: yüz merkezde
     sw, sh = src.size
@@ -275,12 +276,14 @@ def render_photo_version(out):
     top = np.clip((0.18 - ys) / 0.18, 0, 1) * 0.55
     grad[:, :, 0] = np.maximum(grad[:, :, 0], top)
 
+    # Ses analizi: 0-13.5 sn müzik; İtalyanca anons ~13.6-31.2 sn (4 cümle bloğu)
     texts = [
-        # İtalyanca anons (yaklaşık 1-12. sn): yaygın aktarılan Türkçe çeviri, alt yazı
-        (1.2, 6.6, ("sub", ["“Sezar, İskender, Napolyon…", "ayağa kalkınız!”"])),
-        (6.6, 12.2, ("sub", ["“Büyüğünüz geliyor…”"])),
-        (13.0, 19.5, ["Aramızdan ayrılışının", "88. yılında"]),
-        (20.0, total - 4.0, ["Gazi Mustafa Kemal", "Atatürk'ü saygı,", "minnet ve özlemle", "anıyoruz."]),
+        (1.0, 6.6, ["10 Kasım 1938", "09.05"]),
+        (7.0, 13.2, ["Aramızdan ayrılışının", "88. yılında"]),
+        (13.6, 17.25, ("sub", ["“Sezar, İskender, Napolyon…”"])),
+        (17.3, 23.3, ("sub", ["“Ayağa kalkınız!”"])),
+        (23.4, 31.3, ("sub", ["“Büyüğünüz geliyor…”"])),
+        (31.6, total - 3.8, ["Gazi Mustafa Kemal", "Atatürk'ü saygı,", "minnet ve özlemle", "anıyoruz."]),
         (total - 3.6, total + 1, "end"),
     ]
     tmpv = out + ".v.mp4"
@@ -307,7 +310,8 @@ def render_photo_version(out):
         for s, e, what in texts:
             if not (s <= t < e):
                 continue
-            a = min(ease((t - s) / 0.9), 1 - ease((t - (e - 0.9)) / 0.9))
+            fd = 0.25 if isinstance(what, tuple) else 0.9
+            a = min(ease((t - s) / fd), 1 - ease((t - (e - fd)) / fd))
             if isinstance(what, tuple) and what[0] == "sub":
                 sf = font(F_SEMI, 58)
                 y = 1500
@@ -332,7 +336,7 @@ def render_photo_version(out):
     if p.wait() != 0:
         raise RuntimeError("ffmpeg hata")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmpv, "-i", ANONS,
-                    "-af", f"afade=t=in:d=0.8,afade=t=out:st={total - 1.5:.2f}:d=1.5",
+                    "-af", f"afade=t=in:d=0.8,afade=t=out:st={adur - 1.2:.2f}:d=1.2,apad",
                     "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest",
                     "-movflags", "+faststart", out], check=True)
     os.remove(tmpv)

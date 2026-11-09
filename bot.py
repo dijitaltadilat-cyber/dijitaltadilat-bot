@@ -231,6 +231,33 @@ def post_profile_stories(dry_run):
     print("=== Hikâyeler tamamlandı ===")
 
 
+def post_special_reel(name, dry_run):
+    """Özel gün Reels'i: sayaçları değiştirmez, satış metni eklemez."""
+    from special_reels import CAPTIONS, render
+    path = os.path.join(MEDIA_DIR, f"ozel-{name}.mp4")
+    render(path)
+    print(f"🎬 Özel Reels üretildi: {name}")
+    if dry_run:
+        return
+    if not (INSTAGRAM_ACCOUNT_ID and ACCESS_TOKEN):
+        fail("INSTAGRAM_ACCOUNT_ID veya ACCESS_TOKEN eksik (GitHub Secrets).")
+    media_id = post_reel(path, CAPTIONS[name])
+    os.remove(path)
+    state = load_json(STATE_PATH, {"post": 0, "reel": 0, "history": []})
+    state["history"] = (state.get("history", []) + [{
+        "time": datetime.now(TR).isoformat(timespec="minutes"), "kind": f"special_{name}",
+        "media_id": media_id}])[-60:]
+    save_json(STATE_PATH, state)
+    git("add", "state.json")
+    git("commit", "-m", f"Özel paylaşım: {name}")
+    for _ in range(3):
+        try:
+            git("push")
+            break
+        except subprocess.CalledProcessError:
+            git("pull", "--rebase")
+
+
 def post_reel(video_path, caption):
     print("📤 Reels konteyneri oluşturuluyor (doğrudan yükleme)...")
     r = requests.post(f"{BASE_URL}/{INSTAGRAM_ACCOUNT_ID}/media",
@@ -255,12 +282,14 @@ def post_reel(video_path, caption):
 # --------------------------------------------------------------------- akış
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--kind", choices=["image", "reel", "stories"], required=True)
+    ap.add_argument("--kind", choices=["image", "reel", "stories", "special_ataturk"], required=True)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     if args.kind == "stories":
         return post_profile_stories(args.dry_run)
+    if args.kind.startswith("special_"):
+        return post_special_reel(args.kind.split("_", 1)[1], args.dry_run)
 
     content = load_json(CONTENT_PATH)
     state = load_json(STATE_PATH, {"post": 0, "reel": 0, "history": []})

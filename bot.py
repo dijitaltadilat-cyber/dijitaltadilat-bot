@@ -202,6 +202,12 @@ def main():
 
     if not args.dry_run and not (INSTAGRAM_ACCOUNT_ID and ACCESS_TOKEN):
         fail("INSTAGRAM_ACCOUNT_ID veya ACCESS_TOKEN eksik (GitHub Secrets).")
+    if ACCESS_TOKEN:
+        t = ACCESS_TOKEN
+        print(f"🔑 Token kontrolü: uzunluk={len(t)}, EAA ile başlıyor={t.startswith('EAA')}, "
+              f"boşluk var={any(c.isspace() for c in t)}, tırnak/virgül var={any(c in t for c in '{}:,')}")
+        print(f"🔑 Hesap no kontrolü: uzunluk={len(INSTAGRAM_ACCOUNT_ID or '')}, "
+              f"sadece rakam={(INSTAGRAM_ACCOUNT_ID or '').isdigit()}")
 
     if args.kind == "image":
         rel = f"media/{stamp}-post{idx}.jpg"

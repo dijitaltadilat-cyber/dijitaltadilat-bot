@@ -1,14 +1,14 @@
 name: Instagram Bot
 
 # Saatler UTC yazılır. Türkiye = UTC+3 (yaz/kış saati yok).
-#   Gönderi : Pzt–Cmt 08:37  -> esnaf dükkânı açarken çayını içip telefona bakıyor
-#   Reels   : Sal/Per/Cmt 20:43 -> kepenk kapandı, Reels izleme saati
-#   Reels   : Pazar 12:17       -> pazar günü, rahat kaydırma saati
+#   Görsel : her gün 08:37 -> esnaf dükkânı açarken çayını içip telefona bakıyor
+#   Görsel : her gün 13:07 -> öğle arası, telefon elde
+#   Reels  : her gün 20:43 -> kepenk kapandı, Reels izleme saati
 on:
   schedule:
-    - cron: "37 5 * * 1-6"
-    - cron: "43 17 * * 2,4,6"
-    - cron: "17 9 * * 0"
+    - cron: "37 5 * * *"
+    - cron: "7 10 * * *"
+    - cron: "43 17 * * *"
   workflow_dispatch:
     inputs:
       kind:
@@ -53,7 +53,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "kind=${{ inputs.kind }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "37 5 * * 1-6" ]; then
+          elif [ "${{ github.event.schedule }}" = "37 5 * * *" ] || [ "${{ github.event.schedule }}" = "7 10 * * *" ]; then
             echo "kind=image" >> "$GITHUB_OUTPUT"
           else
             echo "kind=reel" >> "$GITHUB_OUTPUT"

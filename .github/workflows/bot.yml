@@ -14,7 +14,7 @@ on:
       kind:
         description: "Ne paylaşılsın?"
         type: choice
-        options: [image, reel]
+        options: [image, reel, stories]
         default: image
       dry_run:
         description: "Sadece üret, Instagram'a atma"

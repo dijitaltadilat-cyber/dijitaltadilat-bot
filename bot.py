@@ -201,6 +201,36 @@ def push_media(rel_paths):
     return urls
 
 
+def post_story(image_url):
+    r = requests.post(f"{BASE_URL}/{INSTAGRAM_ACCOUNT_ID}/media",
+                      data={"image_url": image_url, "media_type": "STORIES",
+                            "access_token": ACCESS_TOKEN}, timeout=60)
+    cid = handle(r, "Hikâye konteyneri")["id"]
+    wait_ready(cid, max_wait=120, delay=5)
+    return publish(cid)
+
+
+def post_profile_stories(dry_run):
+    """Profil kitindeki 6 hikâye sayfasını sırayla hikâye olarak paylaşır."""
+    from profile_kit import build
+    stamp = datetime.now(TR).strftime("%Y%m%d-%H%M")
+    out = os.path.join(MEDIA_DIR, f"{stamp}-hikayeler")
+    files = [f for f in build(out) if f.endswith("_hikaye.jpg")]
+    rels = [os.path.relpath(f, ROOT) for f in files]
+    for f in os.listdir(out):
+        if f.endswith("_kapak.jpg"):
+            os.remove(os.path.join(out, f))
+    print(f"🖼️  {len(rels)} hikâye üretildi")
+    if dry_run:
+        return
+    if not (INSTAGRAM_ACCOUNT_ID and ACCESS_TOKEN):
+        fail("INSTAGRAM_ACCOUNT_ID veya ACCESS_TOKEN eksik (GitHub Secrets).")
+    for u in push_media(rels):
+        post_story(u)
+        time.sleep(3)
+    print("=== Hikâyeler tamamlandı ===")
+
+
 def post_reel(video_path, caption):
     print("📤 Reels konteyneri oluşturuluyor (doğrudan yükleme)...")
     r = requests.post(f"{BASE_URL}/{INSTAGRAM_ACCOUNT_ID}/media",
@@ -225,9 +255,12 @@ def post_reel(video_path, caption):
 # --------------------------------------------------------------------- akış
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--kind", choices=["image", "reel"], required=True)
+    ap.add_argument("--kind", choices=["image", "reel", "stories"], required=True)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    if args.kind == "stories":
+        return post_profile_stories(args.dry_run)
 
     content = load_json(CONTENT_PATH)
     state = load_json(STATE_PATH, {"post": 0, "reel": 0, "history": []})

@@ -25,6 +25,7 @@ NAVY2 = (38, 30, 72)
 PHONE = "0507 295 06 55"
 WA_LINE = f"WhatsApp {PHONE}"
 HANDLE = "@dijitaltadilat"
+WEB = "dijitaltadilat.com"
 
 _fc, _ic = {}, {}
 
@@ -204,7 +205,7 @@ def v_card(post):
     y = text_block(d, 110, y, hl, hf, hlh, NAVY) + 28
     text_block(d, 110, y, bl, bf, blh, NAVY2)
     wa_pill(d, X, 930, LIME, NAVY, size=34, h=72)
-    d.text((W - X - d.textlength(HANDLE, font=font(F_SEMI, 30)), 950), HANDLE,
+    d.text((W - X - d.textlength(WEB, font=font(F_SEMI, 30)), 950), WEB,
            fill=MUTED, font=font(F_SEMI, 30))
     return img
 
@@ -414,7 +415,7 @@ def make_reel(reel, out_path, slide_dur=1.6, hold=1.4, end_dur=3.0):
                 lg.putalpha(lg.split()[3].point(lambda p: int(p * a)))
             img.paste(lg, ((RW - lg.size[0]) // 2, 470 - (lg.size[1] - 560) // 2), lg)
             tf = font(F_SEMI, 44)
-            line = "Esnafın sosyal medya ortağı"
+            line = "Sosyal medya ajansı & yazılım"
             d.text(((RW - d.textlength(line, font=tf)) / 2, 1080), line, fill=mix(MUTED, a), font=tf)
             pt = ease((et - 0.5) / 0.5)
             if pt > 0:
@@ -427,6 +428,8 @@ def make_reel(reel, out_path, slide_dur=1.6, hold=1.4, end_dur=3.0):
                 d.text((px + 50, py + 18), cta, fill=NAVY, font=cf)
                 nf = font(F_HEAD, 84)
                 d.text(((RW - d.textlength(PHONE, font=nf)) / 2, py + 160), PHONE, fill=mix(WHITE, pt), font=nf)
+                wf = font(F_BOLD, 46)
+                d.text(((RW - d.textlength(WEB, font=wf)) / 2, py + 290), WEB, fill=mix(MUTED, pt), font=wf)
 
         proc.stdin.write(img.tobytes())
 

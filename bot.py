@@ -90,8 +90,9 @@ def build_caption(item, district):
     return (
         f"{item['caption']}\n\n"
         f"📍 İzmir · {district['name']} esnafı, bu paylaşım sana!\n"
-        "Dükkânının Instagram'ını biz yönetelim. İlk görüşme ücretsiz.\n"
-        f"📲 WhatsApp: {PHONE}\n\n"
+        "Sosyal medya yönetimi, web sitesi ve yazılım: hepsi tek elden. İlk görüşme ücretsiz.\n"
+        f"📲 WhatsApp: {PHONE}\n"
+        "🌐 dijitaltadilat.com\n\n"
         + " ".join(uniq)
     )
 

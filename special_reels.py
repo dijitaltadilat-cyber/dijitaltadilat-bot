@@ -276,8 +276,9 @@ def render_photo_version(out):
     grad[:, :, 0] = np.maximum(grad[:, :, 0], top)
 
     texts = [
-        (1.0, total - 3.5, "label"),
-        (6.0, 12.5, ["10 Kasım 1938", "09.05"]),
+        # İtalyanca anons (yaklaşık 1-12. sn): yaygın aktarılan Türkçe çeviri, alt yazı
+        (1.2, 6.6, ("sub", ["“Sezar, İskender, Napolyon…", "ayağa kalkınız!”"])),
+        (6.6, 12.2, ("sub", ["“Büyüğünüz geliyor…”"])),
         (13.0, 19.5, ["Aramızdan ayrılışının", "88. yılında"]),
         (20.0, total - 4.0, ["Gazi Mustafa Kemal", "Atatürk'ü saygı,", "minnet ve özlemle", "anıyoruz."]),
         (total - 3.6, total + 1, "end"),
@@ -307,19 +308,19 @@ def render_photo_version(out):
             if not (s <= t < e):
                 continue
             a = min(ease((t - s) / 0.9), 1 - ease((t - (e - 0.9)) / 0.9))
-            if what == "label":
-                lf = font(F_SEMI, 40)
-                lab = "İtalyan radyosu · 10 Kasım 1938"
-                d.text(((W - d.textlength(lab, font=lf)) / 2, 230), lab, fill=mix(WHITE, a * 0.85, (0, 0, 0)), font=lf)
-                d.rectangle([W / 2 - 50, 290, W / 2 + 50, 296], fill=mix(RED, a, (0, 0, 0)))
+            if isinstance(what, tuple) and what[0] == "sub":
+                sf = font(F_SEMI, 58)
+                y = 1500
+                for ln in what[1]:
+                    tw = d.textlength(ln, font=sf)
+                    d.text(((W - tw) / 2, y), ln, font=sf, fill=mix(WHITE, a, (0, 0, 0)),
+                           stroke_width=3, stroke_fill=(0, 0, 0))
+                    y += 76
             elif what == "end":
                 a = ease((t - s) / 0.9)
                 f = font(F_HEAD, 80)
                 centered(d, "Unutmadık,", f, 1330, mix(WHITE, a, (0, 0, 0)))
                 centered(d, "unutmayacağız.", f, 1420, mix(WHITE, a, (0, 0, 0)))
-                m = asset("logo_mark.png", max_h=80, opacity=0.9 * a)
-                img.paste(m, ((W - m.size[0]) // 2, 1580), m)
-                centered(d, "Dijital Tadilat", font(F_SEMI, 36), 1680, mix(GREY, a, (0, 0, 0)))
             else:
                 f = font(F_HEAD, 86)
                 y = 1560 - len(what) * 100

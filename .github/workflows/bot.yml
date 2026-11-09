@@ -1,22 +1,17 @@
 name: Instagram Bot
 
-# Saatler UTC yazılır. Türkiye = UTC+3 (yaz/kış saati yok).
-#   Görsel : her gün 08:37 -> esnaf dükkânı açarken çayını içip telefona bakıyor
-#   Görsel : her gün 13:07 -> öğle arası, telefon elde
-#   Reels  : her gün 20:43 -> kepenk kapandı, Reels izleme saati
+# Bot her 20 dakikada bir uyanır; paylaşım saati geldiyse (ya da GitHub
+# gecikmesi yüzünden kaçtıysa) paylaşımı yapar. Saatler bot.py içinde (TR):
+#   08:37 görsel · 13:07 görsel · 20:43 Reels · 10 Kasım: sadece 09:05 anma
 on:
   schedule:
-    - cron: "37 5 * * *"
-    - cron: "7 10 * * *"
-    - cron: "43 17 * * *"
-    # 10 Kasım 09:05 anma Reels'i (o gün normal paylaşımlar durur)
-    - cron: "5 6 10 11 *"
+    - cron: "7,27,47 * * * *"
   workflow_dispatch:
     inputs:
       kind:
         description: "Ne paylaşılsın?"
         type: choice
-        options: [image, reel, stories, special_ataturk]
+        options: [auto, image, reel, stories, special_ataturk]
         default: image
       dry_run:
         description: "Sadece üret, Instagram'a atma"
@@ -53,19 +48,10 @@ jobs:
       - name: Paylaşım türünü belirle
         id: kind
         run: |
-          TODAY=$(TZ=Europe/Istanbul date +%m-%d)
-          SCHED="${{ github.event.schedule }}"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "kind=${{ inputs.kind }}" >> "$GITHUB_OUTPUT"
-          elif [ "$SCHED" = "5 6 10 11 *" ]; then
-            echo "kind=special_ataturk" >> "$GITHUB_OUTPUT"
-          elif [ "$TODAY" = "11-10" ]; then
-            echo "10 Kasım: anma günü, normal paylaşım yapılmıyor."
-            echo "kind=skip" >> "$GITHUB_OUTPUT"
-          elif [ "$SCHED" = "37 5 * * *" ] || [ "$SCHED" = "7 10 * * *" ]; then
-            echo "kind=image" >> "$GITHUB_OUTPUT"
           else
-            echo "kind=reel" >> "$GITHUB_OUTPUT"
+            echo "kind=auto" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Git kimliği
@@ -74,7 +60,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Botu çalıştır
-        if: steps.kind.outputs.kind != 'skip'
         env:
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

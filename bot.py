@@ -284,17 +284,66 @@ def post_reel(video_path, caption):
     return publish(cid)
 
 
+# ---------------------------------------------------------- paylaşım saatleri
+# Türkiye saati. GitHub bir çalıştırmayı geciktirse/atlasa bile bot her 20
+# dakikada bir kontrol eder ve saati geçmiş ama yapılmamış paylaşımı yapar.
+SLOTS = [("08:37", "image"), ("13:07", "image"), ("20:43", "reel")]
+SPECIAL_DAYS = {"11-10": [("09:05", "special_ataturk")]}  # o gün sadece bunlar
+CATCH_UP_HOURS = 4
+
+
+def due_slot(state, now=None):
+    now = now or datetime.now(TR)
+    date = now.strftime("%Y-%m-%d")
+    done = set(state.get("slots_done", []))
+    for hhmm, kind in SPECIAL_DAYS.get(now.strftime("%m-%d"), SLOTS):
+        h, m = map(int, hhmm.split(":"))
+        t = now.replace(hour=h, minute=m, second=0, microsecond=0)
+        key = f"{date} {hhmm}"
+        if t <= now <= t + timedelta(hours=CATCH_UP_HOURS) and key not in done:
+            return key, kind
+    return None
+
+
+def mark_slot_done(slot_key):
+    if not slot_key:
+        return
+    state = load_json(STATE_PATH, {"post": 0, "reel": 0, "history": []})
+    state["slots_done"] = (state.get("slots_done", []) + [slot_key])[-120:]
+    save_json(STATE_PATH, state)
+    git("add", "state.json")
+    git("commit", "-m", f"Saat tamamlandı: {slot_key}")
+    for _ in range(3):
+        try:
+            git("push")
+            return
+        except subprocess.CalledProcessError:
+            git("pull", "--rebase")
+
+
 # --------------------------------------------------------------------- akış
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--kind", choices=["image", "reel", "stories", "special_ataturk"], required=True)
+    ap.add_argument("--kind", choices=["auto", "image", "reel", "stories", "special_ataturk"], required=True)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+
+    slot_key = None
+    if args.kind == "auto":
+        slot = due_slot(load_json(STATE_PATH, {}))
+        if not slot:
+            print(f"⏸️  {datetime.now(TR):%H:%M} – şu an yapılacak paylaşım yok.")
+            return
+        slot_key, args.kind = slot
+        print(f"⏰ Sıradaki paylaşım saati: {slot_key} → {args.kind}")
 
     if args.kind == "stories":
         return post_profile_stories(args.dry_run)
     if args.kind.startswith("special_"):
-        return post_special_reel(args.kind.split("_", 1)[1], args.dry_run)
+        post_special_reel(args.kind.split("_", 1)[1], args.dry_run)
+        if not args.dry_run:
+            mark_slot_done(slot_key)
+        return
 
     content = load_json(CONTENT_PATH)
     state = load_json(STATE_PATH, {"post": 0, "reel": 0, "history": []})
@@ -352,6 +401,8 @@ def main():
         os.remove(path)  # videolar repoya eklenmez
 
     state[key] += 1
+    if slot_key:
+        state["slots_done"] = (state.get("slots_done", []) + [slot_key])[-120:]
     state["history"] = (state.get("history", []) + [{
         "time": now.isoformat(timespec="minutes"), "kind": args.kind,
         "index": idx, "district": district["name"], "media_id": media_id,

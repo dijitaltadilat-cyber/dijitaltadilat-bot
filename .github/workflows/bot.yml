@@ -70,6 +70,7 @@ jobs:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python check_token.py || true
             python bot.py --kind "${{ steps.kind.outputs.kind }}" --dry-run
           else
             python bot.py --kind "${{ steps.kind.outputs.kind }}"

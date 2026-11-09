@@ -110,6 +110,13 @@
    "caption": "Vitrinin sadece camdan ibaret değil. 👗"
   },
   {
+   "label": "WEB SİTESİ",
+   "tag": "websitesi",
+   "headline": "Instagram vitrinin, web sitesi dükkânın.",
+   "body": "Google'da çıkan, telefonda hızlı açılan bir site ile güven kazan.",
+   "caption": "Instagram'dan gelen müşteri, web sitende güven bulsun. 🌐"
+  },
+  {
    "label": "KUAFÖRLER İÇİN",
    "tag": "kuaför",
    "headline": "Önce-sonra fotoğrafı, en iyi reklamındır.",
@@ -138,6 +145,13 @@
    "caption": "Bir teşekkür, yeni bir müşteri getirir. 💬"
   },
   {
+   "label": "WEB SİTESİ",
+   "tag": "websitesi",
+   "headline": "Menün, fiyatların, konumun: tek bir linkte.",
+   "body": "Müşteri sormadan bilsin. Basit, hızlı, mobil uyumlu site.",
+   "caption": "Her şey tek linkte olsun, müşteri sormadan bilsin. 🔗"
+  },
+  {
    "type": "packages",
    "tag": "esnaf",
    "caption": "Dükkânına uygun paketi seç, Instagram'ını biz yönetelim. 👇\n\n🟢 BAŞLANGIÇ · 3.990 ₺/ay\nAyda 8 gönderi, haftada 3 story, profil tadilatı, aylık mini rapor\n\n⭐ STANDART · 6.990 ₺/ay (en çok tercih edilen)\nAyda 12 gönderi + 4 Reels, haftada 5 story, Google İşletme profili, yorum ve mesaj takibi, aylık rapor\n\n🚀 PRO · 10.990 ₺/ay\nAyda 16 gönderi + 8 Reels, her gün story, ayda 1 dükkânda çekim, reklam kurulumu ve yönetimi, aylık strateji görüşmesi\n\n🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim. Taahhüt yok."
@@ -162,6 +176,13 @@
    "headline": "Logon var, rengin var. Peki kimliğin var mı?",
    "body": "Aynı renk, aynı dil, aynı his. Marka böyle akılda kalır.",
    "caption": "Tanınan işletme, tercih edilen işletmedir. 🎨"
+  },
+  {
+   "label": "YAZILIM",
+   "tag": "yazılım",
+   "headline": "Randevu defteri yerine online randevu.",
+   "body": "Berber, kuaför, klinik… Müşterin 7/24 kendi randevusunu alsın.",
+   "caption": "Telefon çalmadan dolan randevu takvimi. 📅"
   },
   {
    "label": "BERBERLER İÇİN",
@@ -190,6 +211,13 @@
    "caption": "🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim!\nTaahhüt yok, istediğin ay bırakırsın. İlk görüşme ve profil analizi ücretsiz.\nPaketler aylık 3.990 ₺'den başlıyor."
   },
   {
+   "label": "WEB SİTESİ",
+   "tag": "websitesi",
+   "headline": "Google'da 'yakınımdaki' aramalarında çık.",
+   "body": "SEO uyumlu site + Google İşletme profili = yeni müşteri.",
+   "caption": "Müşteri 'yakınımdaki' diye arıyor. Sen çıkıyor musun? 📍"
+  },
+  {
    "label": "RESTORANLAR İÇİN",
    "tag": "restoran",
    "headline": "Günün menüsü 11'de story'de olsun.",
@@ -216,6 +244,13 @@
    "headline": "Sosyal medyaya vaktin yok mu? Çok normal.",
    "body": "Sen dükkânına bak, paylaşımları biz hazırlayalım.",
    "caption": "Sen işine, biz Instagram'ına. 🤝"
+  },
+  {
+   "label": "YAZILIM",
+   "tag": "yazılım",
+   "headline": "Sosyal medya + web + yazılım: hepsi tek yerden.",
+   "body": "Dijital Tadilat, esnafın tüm dijital işini tek elden çözer.",
+   "caption": "Ayrı ayrı uğraşma, dijital işlerini tek elden çözelim. 🛠️"
   },
   {
    "label": "FIRINLAR İÇİN",
@@ -314,6 +349,15 @@
     "3. Cevapsız mesaj"
    ],
    "caption": "Bunlardan hangisi sende var? 👇"
+  },
+  {
+   "tag": "websitesi",
+   "slides": [
+    "Sadece Instagram yetmez.",
+    "Google'da da çık.",
+    "Web sitesi + sosyal medya, tek elden."
+   ],
+   "caption": "Instagram + web sitesi = tam dijital vitrin. 🌐"
   },
   {
    "tag": "esnaf",

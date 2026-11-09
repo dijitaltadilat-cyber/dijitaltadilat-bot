@@ -1,3 +1,5 @@
 preview/
 __pycache__/
 media/*.mp4
+assets/special/*.jpg
+assets/special/*.mp3

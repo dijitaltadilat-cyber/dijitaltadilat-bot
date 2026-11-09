@@ -235,7 +235,12 @@ def post_special_reel(name, dry_run):
     """Özel gün Reels'i: sayaçları değiştirmez, satış metni eklemez."""
     from special_reels import CAPTIONS, render
     path = os.path.join(MEDIA_DIR, f"ozel-{name}.mp4")
-    render(path)
+    prebuilt = os.path.join(ROOT, "assets", "special", f"{name}_reel.mp4")
+    if os.path.exists(prebuilt):
+        import shutil
+        shutil.copy(prebuilt, path)  # onaylanmış hazır video
+    else:
+        render(path)
     print(f"🎬 Özel Reels üretildi: {name}")
     if dry_run:
         return

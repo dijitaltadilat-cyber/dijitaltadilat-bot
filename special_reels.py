@@ -235,12 +235,106 @@ def render_audio(path):
 
 
 def render(out):
+    if os.path.exists(PHOTO) and os.path.exists(ANONS):
+        return render_photo_version(out)
     tmp = tempfile.mkdtemp()
     v, a = os.path.join(tmp, "v.mp4"), os.path.join(tmp, "a.wav")
     render_video(v)
     render_audio(a)
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", v, "-i", a, "-c:v", "copy",
                     "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", out], check=True)
+    return out
+
+
+# ------------------------------------------------- fotoğraflı + anonslu sürüm
+ROOT = os.path.dirname(os.path.abspath(__file__))
+PHOTO = os.path.join(ROOT, "assets", "special", "ataturk.jpg")
+ANONS = os.path.join(ROOT, "assets", "special", "ataturk_anons.mp3")
+
+
+def audio_duration(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                          "-of", "csv=p=0", path], capture_output=True, text=True).stdout
+    return float(out.strip())
+
+
+def render_photo_version(out):
+    total = audio_duration(ANONS)
+    src = Image.open(PHOTO).convert("RGB")
+    # dikey kadraj: yüz merkezde
+    sw, sh = src.size
+    cw = int(sh * 9 / 16)
+    cx = int(sw * 0.52)
+    left = max(0, min(sw - cw, cx - cw // 2))
+    crop = src.crop((left, 0, left + cw, sh))
+    base = crop.resize((int(W * 1.12), int(H * 1.12)), Image.LANCZOS)
+    # alttan karartma (yazı okunurluğu)
+    grad = np.zeros((H, W, 1), np.float32)
+    ys = np.linspace(0, 1, H)[:, None]
+    grad[:, :, 0] = np.clip((ys - 0.45) / 0.55, 0, 1) ** 1.3 * 0.85
+    top = np.clip((0.18 - ys) / 0.18, 0, 1) * 0.55
+    grad[:, :, 0] = np.maximum(grad[:, :, 0], top)
+
+    texts = [
+        (1.0, total - 3.5, "label"),
+        (6.0, 12.5, ["10 Kasım 1938", "09.05"]),
+        (13.0, 19.5, ["Aramızdan ayrılışının", "88. yılında"]),
+        (20.0, total - 4.0, ["Gazi Mustafa Kemal", "Atatürk'ü saygı,", "minnet ve özlemle", "anıyoruz."]),
+        (total - 3.6, total + 1, "end"),
+    ]
+    tmpv = out + ".v.mp4"
+    cmd = ["ffmpeg", "-y", "-loglevel", "error",
+           "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+           "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", tmpv]
+    p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    n = int(total * FPS)
+    for i in range(n):
+        t = i / FPS
+        z = 1.0 + 0.10 * (t / total)            # yavaş yakınlaşma
+        bw, bh = base.size
+        vw, vh = int(bw / 1.12 / z * 1.12 / 1.12 * 1.0), 0
+        cw2, ch2 = int(bw / z), int(bh / z)
+        x0 = (bw - cw2) // 2
+        y0 = int((bh - ch2) * 0.35)
+        frame = base.crop((x0, y0, x0 + cw2, y0 + ch2)).resize((W, H), Image.BILINEAR)
+        arr = np.asarray(frame).astype(np.float32)
+        fin = ease(t / 2.0)
+        end_dark = ease((t - (total - 3.6)) / 1.2) * 0.55
+        arr = arr * (1 - grad) * fin * (1 - end_dark)
+        img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+        d = ImageDraw.Draw(img)
+        for s, e, what in texts:
+            if not (s <= t < e):
+                continue
+            a = min(ease((t - s) / 0.9), 1 - ease((t - (e - 0.9)) / 0.9))
+            if what == "label":
+                lf = font(F_SEMI, 40)
+                lab = "İtalyan radyosu · 10 Kasım 1938"
+                d.text(((W - d.textlength(lab, font=lf)) / 2, 230), lab, fill=mix(WHITE, a * 0.85, (0, 0, 0)), font=lf)
+                d.rectangle([W / 2 - 50, 290, W / 2 + 50, 296], fill=mix(RED, a, (0, 0, 0)))
+            elif what == "end":
+                a = ease((t - s) / 0.9)
+                f = font(F_HEAD, 80)
+                centered(d, "Unutmadık,", f, 1330, mix(WHITE, a, (0, 0, 0)))
+                centered(d, "unutmayacağız.", f, 1420, mix(WHITE, a, (0, 0, 0)))
+                m = asset("logo_mark.png", max_h=80, opacity=0.9 * a)
+                img.paste(m, ((W - m.size[0]) // 2, 1580), m)
+                centered(d, "Dijital Tadilat", font(F_SEMI, 36), 1680, mix(GREY, a, (0, 0, 0)))
+            else:
+                f = font(F_HEAD, 86)
+                y = 1560 - len(what) * 100
+                for ln in what:
+                    centered(d, ln, f, y, mix(WHITE, a, (0, 0, 0)))
+                    y += 100
+        p.stdin.write(img.tobytes())
+    p.stdin.close()
+    if p.wait() != 0:
+        raise RuntimeError("ffmpeg hata")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", tmpv, "-i", ANONS,
+                    "-af", f"afade=t=in:d=0.8,afade=t=out:st={total - 1.5:.2f}:d=1.5",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest",
+                    "-movflags", "+faststart", out], check=True)
+    os.remove(tmpv)
     return out
 
 

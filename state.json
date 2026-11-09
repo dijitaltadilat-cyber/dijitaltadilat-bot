@@ -1,5 +1,13 @@
 {
-  "post": 0,
+  "post": 1,
   "reel": 0,
-  "history": []
+  "history": [
+    {
+      "time": "2026-11-09T03:38+03:00",
+      "kind": "image",
+      "index": 0,
+      "district": "Konak",
+      "media_id": "17970988413077475"
+    }
+  ]
 }

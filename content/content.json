@@ -1,64 +1,420 @@
 {
-  "districts": [
-    {"name": "Konak", "tag": "konak"},
-    {"name": "Karşıyaka", "tag": "karşıyaka"},
-    {"name": "Bornova", "tag": "bornova"},
-    {"name": "Buca", "tag": "buca"},
-    {"name": "Bayraklı", "tag": "bayraklı"},
-    {"name": "Alsancak", "tag": "alsancak"},
-    {"name": "Çiğli", "tag": "çiğli"},
-    {"name": "Karabağlar", "tag": "karabağlar"},
-    {"name": "Gaziemir", "tag": "gaziemir"},
-    {"name": "Narlıdere", "tag": "narlıdere"},
-    {"name": "Balçova", "tag": "balçova"},
-    {"name": "Menemen", "tag": "menemen"}
-  ],
-
-  "posts": [
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Dükkânın Instagram'da yoksa, müşteri seni bulamaz.", "body": "Müşterilerin her gün telefonda. Vitrinin de orada olsun.", "caption": "Müşterilerin her gün Instagram'da geziniyor. Dükkânın orada mı? 📱"},
-    {"label": "KAFELER İÇİN", "tag": "kafe", "headline": "Kahven güzel. Ama bunu kimse bilmiyor.", "body": "Günde bir fotoğraf, seni mahallenin yeni favori kafesi yapar.", "caption": "En güzel kahve, görülen kahvedir. ☕"},
-    {"label": "BERBERLER İÇİN", "tag": "berber", "headline": "Boş koltuk, paylaşılmayan bir kesimdir.", "body": "Her müşterinin yeni hali, bir sonraki müşterinin sebebi.", "caption": "Her kesim bir vitrin. Paylaşıyor musun? 💈"},
-    {"label": "FIRINLAR İÇİN", "tag": "fırın", "headline": "Sabah 7'de çıkan simit, 7.05'te story'de olmalı.", "body": "Sıcak ürün, sıcak paylaşım ister.", "caption": "Fırından çıktığı an, paylaşma anıdır. 🥯"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Google'da adın çıkıyor mu?", "body": "Müşteri önce telefona bakar, sonra kapına gelir.", "caption": "Bir dene: işletmenin adını Google'a yaz. Ne çıkıyor? 🔎"},
-    {"label": "RESTORANLAR İÇİN", "tag": "restoran", "headline": "Menün güzel. Fotoğrafı daha da güzel olmalı.", "body": "İnsan önce gözüyle yer. Tabağın Instagram'da da doysun.", "caption": "Lezzet ekrandan başlar. 🍽️"},
-    {"label": "BUTİKLER İÇİN", "tag": "butik", "headline": "Yeni sezon vitrine geldi mi? Instagram'a da gelsin.", "body": "Askıdaki ürün değil, paylaşılan ürün satılır.", "caption": "Vitrinin sadece camdan ibaret değil. 👗"},
-    {"label": "KUAFÖRLER İÇİN", "tag": "kuaför", "headline": "Önce-sonra fotoğrafı, en iyi reklamındır.", "body": "Emeğini göster. Müşterin seni oradan seçsin.", "caption": "Emeğin konuşsun. ✂️"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Ayda bir paylaşım yetmez. Düzen gerekir.", "body": "Instagram düzenli paylaşanı öne çıkarır. Düzeni biz kurarız.", "caption": "Görünür olmanın sırrı: düzen. 📅"},
-    {"label": "OTO YIKAMA İÇİN", "tag": "otoyıkama", "headline": "Pırıl pırıl araba = 15 saniyelik video.", "body": "Oto yıkamada en güçlü reklam: önce ve sonra.", "caption": "Parlayan arabayı herkes görsün. 🚗✨"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Yorumlara cevap veriyor musun?", "body": "Her cevap, yeni müşteriye 'burası ilgili' der.", "caption": "Bir teşekkür, yeni bir müşteri getirir. 💬"},
-    {"label": "EMLAKÇILAR İÇİN", "tag": "emlak", "headline": "İlanın kaybolmasın. Profilin vitrin olsun.", "body": "Düzenli paylaşılan portföy, güven ve telefon getirir.", "caption": "Portföyün her gün görünür olsun. 🏠"},
-    {"label": "KAFELER İÇİN", "tag": "kafe", "headline": "Hafta sonu kahvaltısını cuma akşamı duyur.", "body": "Plan yapan müşteriyi önceden yakala.", "caption": "Hafta sonu planı cuma akşamı yapılır. 🍳"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Logon var, rengin var. Peki kimliğin var mı?", "body": "Aynı renk, aynı dil, aynı his. Marka böyle akılda kalır.", "caption": "Tanınan işletme, tercih edilen işletmedir. 🎨"},
-    {"label": "BERBERLER İÇİN", "tag": "berber", "headline": "Randevular telefondan mı, DM'den mi geliyor?", "body": "Instagram'ı randevu defterine çevir.", "caption": "Randevu defterin cebinde olsun. 📲"},
-    {"label": "PASTANELER İÇİN", "tag": "pastane", "headline": "Pasta siparişleri DM'den gelsin.", "body": "Her özel gün pastası, bir sonraki siparişin vitrini.", "caption": "Her pasta bir hikâye. Paylaş, sipariş gelsin. 🎂"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Rakibin her gün paylaşıyor. Sen?", "body": "Mahallede görünür olan, akılda kalır.", "caption": "Akılda kalan kazanır. 👀"},
-    {"label": "RESTORANLAR İÇİN", "tag": "restoran", "headline": "Günün menüsü 11'de story'de olsun.", "body": "Öğle yemeğine karar veren müşteri 11'de telefona bakar.", "caption": "Öğle yemeği kararı 11'de verilir. ⏰"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Konum etiketi = ücretsiz tabela.", "body": "Paylaşımına konum ekle, yoldan geçen seni bulsun.", "caption": "Küçük bir etiket, büyük bir fark. 📍"},
-    {"label": "BUTİKLER İÇİN", "tag": "butik", "headline": "Kabin fotoğrafları satış yapar.", "body": "Gerçek müşteri, gerçek kombin. Güven buradan gelir.", "caption": "Gerçek kombin, gerçek güven. 🛍️"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Sosyal medyaya vaktin yok mu? Çok normal.", "body": "Sen dükkânına bak, paylaşımları biz hazırlayalım.", "caption": "Sen işine, biz Instagram'ına. 🤝"},
-    {"label": "FIRINLAR İÇİN", "tag": "fırın", "headline": "Ekmek kokusu ekrandan gelmez. Ama video gelir.", "body": "Fırının içini göster, müşteri yolunu oradan bulur.", "caption": "Kokuyu gösteremeyiz ama sıcaklığı gösterebiliriz. 🍞"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "1.000 yabancı değil, 100 komşu takipçi.", "body": "Mahalleden gelen takipçi, kapına gelen müşteridir.", "caption": "Önemli olan sayı değil, kim olduğu. 🏘️"},
-    {"label": "KUAFÖRLER İÇİN", "tag": "kuaför", "headline": "Boş saatini story'de duyur.", "body": "'Bugün 15.00 boş' yazmak, o saati doldurur.", "caption": "Boş saat, duyurulmamış saattir. 💇‍♀️"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Profil fotoğrafın logon mu?", "body": "Bir bakışta tanınmak, ilk adımdır.", "caption": "İlk izlenim profil fotoğrafıyla başlar. 🖼️"},
-    {"label": "KAFELER İÇİN", "tag": "kafe", "headline": "Baristanı tanıt. İnsanlar insanlardan alır.", "body": "Yüzü olan işletme, samimi işletmedir.", "caption": "Samimiyet satar. 🙂"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Kampanyan var ama duyuran yok mu?", "body": "En iyi indirim, duyulan indirimdir.", "caption": "Duyulmayan kampanya, yapılmamış kampanyadır. 📣"},
-    {"label": "USTALAR İÇİN", "tag": "usta", "headline": "Ustalığını göster. Atölyen en iyi reklamın.", "body": "Tamir öncesi ve sonrası, binlerce kelimeden güçlüdür.", "caption": "Usta işi görülsün. 🔧"},
-    {"label": "ESNAF İPUCU", "tag": "esnaf", "headline": "Profilinde telefon numaran var mı?", "body": "Müşteri seni tek dokunuşla arayabilmeli.", "caption": "Ulaşılabilir ol, müşteri kaçmasın. ☎️"},
-    {"label": "DİJİTAL TADİLAT", "tag": "esnaf", "headline": "İlk görüşme bizden. Dükkânını konuşalım.", "body": "Hangi paylaşım sana müşteri getirir, birlikte bakalım.", "caption": "Tanışalım, dükkânını konuşalım. ☕"}
-  ],
-
-  "reels": [
-    {"tag": "esnaf", "slides": ["Dükkânın harika.", "Ama Instagram'da kimse görmüyor.", "Biz görünür yaparız."], "caption": "Güzel bir dükkân, görülmeyi hak eder. ✨"},
-    {"tag": "esnaf", "slides": ["Esnafın 3 Instagram hatası", "1. Düzensiz paylaşım", "2. Karanlık fotoğraf", "3. Cevapsız mesaj"], "caption": "Bunlardan hangisi sende var? 👇"},
-    {"tag": "esnaf", "slides": ["Müşteri seni nerede arıyor?", "Tabelada değil…", "Telefonunda."], "caption": "Tabelan artık cebinde. 📱"},
-    {"tag": "esnaf", "slides": ["Sosyal medyaya vaktin yok mu?", "Sen işine bak.", "Paylaşımlar bizden."], "caption": "Sen dükkânına, biz Instagram'ına. 🤝"},
-    {"tag": "esnaf", "slides": ["Story'ye ne atsam?", "Sabah: açılış", "Öğlen: günün ürünü", "Akşam: müşteri yorumu"], "caption": "Kaydet, yarın dene. 📌"},
-    {"tag": "esnaf", "slides": ["Önce → Sonra", "Berber, kuaför, oto yıkama…", "En güçlü reklam bu."], "caption": "Emeğini göster, gerisi gelir. 💪"},
-    {"tag": "esnaf", "slides": ["Konum etiketi ekliyor musun?", "Yoldan geçen seni bulsun.", "Ücretsiz tabela."], "caption": "Küçük ayar, büyük fark. 📍"},
-    {"tag": "esnaf", "slides": ["Rakibin her gün paylaşıyor.", "Müşteri onu hatırlıyor.", "Sıra sende."], "caption": "Akılda kalan kazanır. 👀"},
-    {"tag": "esnaf", "slides": ["İzmir esnafı,", "dijitalde de", "mahallenin en bilineni ol."], "caption": "İzmir'in esnafı, dijitalde de bir numara. 🌊"},
-    {"tag": "esnaf", "slides": ["Geç cevap = kaçan müşteri", "DM'ler hızlı dönülmeli.", "Düzeni birlikte kuralım."], "caption": "Bir mesaj, bir müşteri demek. 💬"},
-    {"tag": "esnaf", "slides": ["Fotoğraf çekerken 3 kural", "1. Gün ışığı", "2. Sade arka plan", "3. Yakın çekim"], "caption": "Telefonla bile profesyonel fotoğraf. 📸"},
-    {"tag": "esnaf", "slides": ["Dijital Tadilat nedir?", "Esnafın sosyal medyasını", "baştan sona yönetiyoruz."], "caption": "Merhaba İzmir! Biz Dijital Tadilat. 👋"}
-  ]
+ "districts": [
+  {
+   "name": "Konak",
+   "tag": "konak"
+  },
+  {
+   "name": "Karşıyaka",
+   "tag": "karşıyaka"
+  },
+  {
+   "name": "Bornova",
+   "tag": "bornova"
+  },
+  {
+   "name": "Buca",
+   "tag": "buca"
+  },
+  {
+   "name": "Bayraklı",
+   "tag": "bayraklı"
+  },
+  {
+   "name": "Alsancak",
+   "tag": "alsancak"
+  },
+  {
+   "name": "Çiğli",
+   "tag": "çiğli"
+  },
+  {
+   "name": "Karabağlar",
+   "tag": "karabağlar"
+  },
+  {
+   "name": "Gaziemir",
+   "tag": "gaziemir"
+  },
+  {
+   "name": "Narlıdere",
+   "tag": "narlıdere"
+  },
+  {
+   "name": "Balçova",
+   "tag": "balçova"
+  },
+  {
+   "name": "Menemen",
+   "tag": "menemen"
+  }
+ ],
+ "posts": [
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Dükkânın Instagram'da yoksa, müşteri seni bulamaz.",
+   "body": "Müşterilerin her gün telefonda. Vitrinin de orada olsun.",
+   "caption": "Müşterilerin her gün Instagram'da geziniyor. Dükkânın orada mı? 📱"
+  },
+  {
+   "label": "KAFELER İÇİN",
+   "tag": "kafe",
+   "headline": "Kahven güzel. Ama bunu kimse bilmiyor.",
+   "body": "Günde bir fotoğraf, seni mahallenin yeni favori kafesi yapar.",
+   "caption": "En güzel kahve, görülen kahvedir. ☕"
+  },
+  {
+   "type": "packages",
+   "tag": "esnaf",
+   "caption": "Dükkânına uygun paketi seç, Instagram'ını biz yönetelim. 👇\n\n🟢 BAŞLANGIÇ · 3.990 ₺/ay\nAyda 8 gönderi, haftada 3 story, profil tadilatı, aylık mini rapor\n\n⭐ STANDART · 6.990 ₺/ay (en çok tercih edilen)\nAyda 12 gönderi + 4 Reels, haftada 5 story, Google İşletme profili, yorum ve mesaj takibi, aylık rapor\n\n🚀 PRO · 10.990 ₺/ay\nAyda 16 gönderi + 8 Reels, her gün story, ayda 1 dükkânda çekim, reklam kurulumu ve yönetimi, aylık strateji görüşmesi\n\n🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim. Taahhüt yok."
+  },
+  {
+   "label": "BERBERLER İÇİN",
+   "tag": "berber",
+   "headline": "Boş koltuk, paylaşılmayan bir kesimdir.",
+   "body": "Her müşterinin yeni hali, bir sonraki müşterinin sebebi.",
+   "caption": "Her kesim bir vitrin. Paylaşıyor musun? 💈"
+  },
+  {
+   "label": "FIRINLAR İÇİN",
+   "tag": "fırın",
+   "headline": "Sabah 7'de çıkan simit, 7.05'te story'de olmalı.",
+   "body": "Sıcak ürün, sıcak paylaşım ister.",
+   "caption": "Fırından çıktığı an, paylaşma anıdır. 🥯"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Google'da adın çıkıyor mu?",
+   "body": "Müşteri önce telefona bakar, sonra kapına gelir.",
+   "caption": "Bir dene: işletmenin adını Google'a yaz. Ne çıkıyor? 🔎"
+  },
+  {
+   "type": "campaign",
+   "tag": "esnaf",
+   "caption": "🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim!\nTaahhüt yok, istediğin ay bırakırsın. İlk görüşme ve profil analizi ücretsiz.\nPaketler aylık 3.990 ₺'den başlıyor."
+  },
+  {
+   "label": "RESTORANLAR İÇİN",
+   "tag": "restoran",
+   "headline": "Menün güzel. Fotoğrafı daha da güzel olmalı.",
+   "body": "İnsan önce gözüyle yer. Tabağın Instagram'da da doysun.",
+   "caption": "Lezzet ekrandan başlar. 🍽️"
+  },
+  {
+   "label": "BUTİKLER İÇİN",
+   "tag": "butik",
+   "headline": "Yeni sezon vitrine geldi mi? Instagram'a da gelsin.",
+   "body": "Askıdaki ürün değil, paylaşılan ürün satılır.",
+   "caption": "Vitrinin sadece camdan ibaret değil. 👗"
+  },
+  {
+   "label": "KUAFÖRLER İÇİN",
+   "tag": "kuaför",
+   "headline": "Önce-sonra fotoğrafı, en iyi reklamındır.",
+   "body": "Emeğini göster. Müşterin seni oradan seçsin.",
+   "caption": "Emeğin konuşsun. ✂️"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Ayda bir paylaşım yetmez. Düzen gerekir.",
+   "body": "Instagram düzenli paylaşanı öne çıkarır. Düzeni biz kurarız.",
+   "caption": "Görünür olmanın sırrı: düzen. 📅"
+  },
+  {
+   "label": "OTO YIKAMA İÇİN",
+   "tag": "otoyıkama",
+   "headline": "Pırıl pırıl araba = 15 saniyelik video.",
+   "body": "Oto yıkamada en güçlü reklam: önce ve sonra.",
+   "caption": "Parlayan arabayı herkes görsün. 🚗✨"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Yorumlara cevap veriyor musun?",
+   "body": "Her cevap, yeni müşteriye 'burası ilgili' der.",
+   "caption": "Bir teşekkür, yeni bir müşteri getirir. 💬"
+  },
+  {
+   "type": "packages",
+   "tag": "esnaf",
+   "caption": "Dükkânına uygun paketi seç, Instagram'ını biz yönetelim. 👇\n\n🟢 BAŞLANGIÇ · 3.990 ₺/ay\nAyda 8 gönderi, haftada 3 story, profil tadilatı, aylık mini rapor\n\n⭐ STANDART · 6.990 ₺/ay (en çok tercih edilen)\nAyda 12 gönderi + 4 Reels, haftada 5 story, Google İşletme profili, yorum ve mesaj takibi, aylık rapor\n\n🚀 PRO · 10.990 ₺/ay\nAyda 16 gönderi + 8 Reels, her gün story, ayda 1 dükkânda çekim, reklam kurulumu ve yönetimi, aylık strateji görüşmesi\n\n🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim. Taahhüt yok."
+  },
+  {
+   "label": "EMLAKÇILAR İÇİN",
+   "tag": "emlak",
+   "headline": "İlanın kaybolmasın. Profilin vitrin olsun.",
+   "body": "Düzenli paylaşılan portföy, güven ve telefon getirir.",
+   "caption": "Portföyün her gün görünür olsun. 🏠"
+  },
+  {
+   "label": "KAFELER İÇİN",
+   "tag": "kafe",
+   "headline": "Hafta sonu kahvaltısını cuma akşamı duyur.",
+   "body": "Plan yapan müşteriyi önceden yakala.",
+   "caption": "Hafta sonu planı cuma akşamı yapılır. 🍳"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Logon var, rengin var. Peki kimliğin var mı?",
+   "body": "Aynı renk, aynı dil, aynı his. Marka böyle akılda kalır.",
+   "caption": "Tanınan işletme, tercih edilen işletmedir. 🎨"
+  },
+  {
+   "label": "BERBERLER İÇİN",
+   "tag": "berber",
+   "headline": "Randevular telefondan mı, DM'den mi geliyor?",
+   "body": "Instagram'ı randevu defterine çevir.",
+   "caption": "Randevu defterin cebinde olsun. 📲"
+  },
+  {
+   "label": "PASTANELER İÇİN",
+   "tag": "pastane",
+   "headline": "Pasta siparişleri DM'den gelsin.",
+   "body": "Her özel gün pastası, bir sonraki siparişin vitrini.",
+   "caption": "Her pasta bir hikâye. Paylaş, sipariş gelsin. 🎂"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Rakibin her gün paylaşıyor. Sen?",
+   "body": "Mahallede görünür olan, akılda kalır.",
+   "caption": "Akılda kalan kazanır. 👀"
+  },
+  {
+   "type": "campaign",
+   "tag": "esnaf",
+   "caption": "🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim!\nTaahhüt yok, istediğin ay bırakırsın. İlk görüşme ve profil analizi ücretsiz.\nPaketler aylık 3.990 ₺'den başlıyor."
+  },
+  {
+   "label": "RESTORANLAR İÇİN",
+   "tag": "restoran",
+   "headline": "Günün menüsü 11'de story'de olsun.",
+   "body": "Öğle yemeğine karar veren müşteri 11'de telefona bakar.",
+   "caption": "Öğle yemeği kararı 11'de verilir. ⏰"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Konum etiketi = ücretsiz tabela.",
+   "body": "Paylaşımına konum ekle, yoldan geçen seni bulsun.",
+   "caption": "Küçük bir etiket, büyük bir fark. 📍"
+  },
+  {
+   "label": "BUTİKLER İÇİN",
+   "tag": "butik",
+   "headline": "Kabin fotoğrafları satış yapar.",
+   "body": "Gerçek müşteri, gerçek kombin. Güven buradan gelir.",
+   "caption": "Gerçek kombin, gerçek güven. 🛍️"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Sosyal medyaya vaktin yok mu? Çok normal.",
+   "body": "Sen dükkânına bak, paylaşımları biz hazırlayalım.",
+   "caption": "Sen işine, biz Instagram'ına. 🤝"
+  },
+  {
+   "label": "FIRINLAR İÇİN",
+   "tag": "fırın",
+   "headline": "Ekmek kokusu ekrandan gelmez. Ama video gelir.",
+   "body": "Fırının içini göster, müşteri yolunu oradan bulur.",
+   "caption": "Kokuyu gösteremeyiz ama sıcaklığı gösterebiliriz. 🍞"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "1.000 yabancı değil, 100 komşu takipçi.",
+   "body": "Mahalleden gelen takipçi, kapına gelen müşteridir.",
+   "caption": "Önemli olan sayı değil, kim olduğu. 🏘️"
+  },
+  {
+   "type": "packages",
+   "tag": "esnaf",
+   "caption": "Dükkânına uygun paketi seç, Instagram'ını biz yönetelim. 👇\n\n🟢 BAŞLANGIÇ · 3.990 ₺/ay\nAyda 8 gönderi, haftada 3 story, profil tadilatı, aylık mini rapor\n\n⭐ STANDART · 6.990 ₺/ay (en çok tercih edilen)\nAyda 12 gönderi + 4 Reels, haftada 5 story, Google İşletme profili, yorum ve mesaj takibi, aylık rapor\n\n🚀 PRO · 10.990 ₺/ay\nAyda 16 gönderi + 8 Reels, her gün story, ayda 1 dükkânda çekim, reklam kurulumu ve yönetimi, aylık strateji görüşmesi\n\n🎁 Açılışa özel: İlk 5 esnafa ilk ay %50 indirim. Taahhüt yok."
+  },
+  {
+   "label": "KUAFÖRLER İÇİN",
+   "tag": "kuaför",
+   "headline": "Boş saatini story'de duyur.",
+   "body": "'Bugün 15.00 boş' yazmak, o saati doldurur.",
+   "caption": "Boş saat, duyurulmamış saattir. 💇‍♀️"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Profil fotoğrafın logon mu?",
+   "body": "Bir bakışta tanınmak, ilk adımdır.",
+   "caption": "İlk izlenim profil fotoğrafıyla başlar. 🖼️"
+  },
+  {
+   "label": "KAFELER İÇİN",
+   "tag": "kafe",
+   "headline": "Baristanı tanıt. İnsanlar insanlardan alır.",
+   "body": "Yüzü olan işletme, samimi işletmedir.",
+   "caption": "Samimiyet satar. 🙂"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Kampanyan var ama duyuran yok mu?",
+   "body": "En iyi indirim, duyulan indirimdir.",
+   "caption": "Duyulmayan kampanya, yapılmamış kampanyadır. 📣"
+  },
+  {
+   "label": "USTALAR İÇİN",
+   "tag": "usta",
+   "headline": "Ustalığını göster. Atölyen en iyi reklamın.",
+   "body": "Tamir öncesi ve sonrası, binlerce kelimeden güçlüdür.",
+   "caption": "Usta işi görülsün. 🔧"
+  },
+  {
+   "label": "ESNAF İPUCU",
+   "tag": "esnaf",
+   "headline": "Profilinde telefon numaran var mı?",
+   "body": "Müşteri seni tek dokunuşla arayabilmeli.",
+   "caption": "Ulaşılabilir ol, müşteri kaçmasın. ☎️"
+  },
+  {
+   "label": "DİJİTAL TADİLAT",
+   "tag": "esnaf",
+   "headline": "İlk görüşme bizden. Dükkânını konuşalım.",
+   "body": "Hangi paylaşım sana müşteri getirir, WhatsApp'tan konuşalım.",
+   "caption": "Tanışalım, dükkânını konuşalım. ☕"
+  }
+ ],
+ "reels": [
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Dükkânın harika.",
+    "Ama Instagram'da kimse görmüyor.",
+    "Biz görünür yaparız."
+   ],
+   "caption": "Güzel bir dükkân, görülmeyi hak eder. ✨"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Sosyal medya yönetimi ne kadar?",
+    "Aylık 3.990 ₺'den başlayan paketler",
+    "İlk 5 esnafa ilk ay %50 indirim"
+   ],
+   "caption": "Fiyatlar net, taahhüt yok. 💚"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Esnafın 3 Instagram hatası",
+    "1. Düzensiz paylaşım",
+    "2. Karanlık fotoğraf",
+    "3. Cevapsız mesaj"
+   ],
+   "caption": "Bunlardan hangisi sende var? 👇"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Müşteri seni nerede arıyor?",
+    "Tabelada değil…",
+    "Telefonunda."
+   ],
+   "caption": "Tabelan artık cebinde. 📱"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Sosyal medyaya vaktin yok mu?",
+    "Sen işine bak.",
+    "Paylaşımlar bizden."
+   ],
+   "caption": "Sen dükkânına, biz Instagram'ına. 🤝"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Story'ye ne atsam?",
+    "Sabah: açılış",
+    "Öğlen: günün ürünü",
+    "Akşam: müşteri yorumu"
+   ],
+   "caption": "Kaydet, yarın dene. 📌"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Önce → Sonra",
+    "Berber, kuaför, oto yıkama…",
+    "En güçlü reklam bu."
+   ],
+   "caption": "Emeğini göster, gerisi gelir. 💪"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Konum etiketi ekliyor musun?",
+    "Yoldan geçen seni bulsun.",
+    "Ücretsiz tabela."
+   ],
+   "caption": "Küçük ayar, büyük fark. 📍"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Sosyal medya yönetimi ne kadar?",
+    "Aylık 3.990 ₺'den başlayan paketler",
+    "İlk 5 esnafa ilk ay %50 indirim"
+   ],
+   "caption": "Fiyatlar net, taahhüt yok. 💚"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Rakibin her gün paylaşıyor.",
+    "Müşteri onu hatırlıyor.",
+    "Sıra sende."
+   ],
+   "caption": "Akılda kalan kazanır. 👀"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "İzmir esnafı,",
+    "dijitalde de",
+    "mahallenin en bilineni ol."
+   ],
+   "caption": "İzmir'in esnafı, dijitalde de bir numara. 🌊"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Geç cevap = kaçan müşteri",
+    "DM'ler hızlı dönülmeli.",
+    "Düzeni birlikte kuralım."
+   ],
+   "caption": "Bir mesaj, bir müşteri demek. 💬"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Fotoğraf çekerken 3 kural",
+    "1. Gün ışığı",
+    "2. Sade arka plan",
+    "3. Yakın çekim"
+   ],
+   "caption": "Telefonla bile profesyonel fotoğraf. 📸"
+  },
+  {
+   "tag": "esnaf",
+   "slides": [
+    "Dijital Tadilat nedir?",
+    "Esnafın sosyal medyasını",
+    "baştan sona yönetiyoruz."
+   ],
+   "caption": "Merhaba İzmir! Biz Dijital Tadilat. 👋"
+  }
+ ]
 }

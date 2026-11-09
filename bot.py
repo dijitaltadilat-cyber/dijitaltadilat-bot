@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from render import make_image, make_reel
+from render import PHONE, make_campaign, make_image, make_packages, make_reel
 
 API_VERSION = "v26.0"
 BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
@@ -86,15 +86,12 @@ def build_caption(item, district):
         "#izmir", f"#{district['tag']}", f"#{district['tag']}esnafı", "#izmiresnafı",
         f"#{tag}", "#esnaf", "#küçükişletme", "#sosyalmedyayönetimi", "#dijitaltadilat",
     ]
-    seen, uniq = set(), []
-    for h in hashtags:
-        if h not in seen:
-            seen.add(h)
-            uniq.append(h)
+    uniq = list(dict.fromkeys(hashtags))
     return (
         f"{item['caption']}\n\n"
         f"📍 İzmir · {district['name']} esnafı, bu paylaşım sana!\n"
-        "Dükkânının Instagram'ını biz yönetelim. İlk görüşme ücretsiz, DM'den yaz 👋\n\n"
+        "Dükkânının Instagram'ını biz yönetelim. İlk görüşme ücretsiz.\n"
+        f"📲 WhatsApp: {PHONE}\n\n"
         + " ".join(uniq)
     )
 
@@ -164,6 +161,45 @@ def post_image(image_url, caption):
     return publish(cid)
 
 
+def post_carousel(image_urls, caption):
+    print(f"📤 Karusel hazırlanıyor ({len(image_urls)} sayfa)...")
+    children = []
+    for u in image_urls:
+        r = requests.post(f"{BASE_URL}/{INSTAGRAM_ACCOUNT_ID}/media",
+                          data={"image_url": u, "is_carousel_item": "true",
+                                "access_token": ACCESS_TOKEN}, timeout=60)
+        cid = handle(r, "Karusel sayfası")["id"]
+        wait_ready(cid, max_wait=120, delay=5)
+        children.append(cid)
+    r = requests.post(f"{BASE_URL}/{INSTAGRAM_ACCOUNT_ID}/media",
+                      data={"media_type": "CAROUSEL", "children": ",".join(children),
+                            "caption": caption, "access_token": ACCESS_TOKEN}, timeout=60)
+    cid = handle(r, "Karusel")["id"]
+    wait_ready(cid, max_wait=180, delay=5)
+    return publish(cid)
+
+
+def push_media(rel_paths):
+    """Görselleri repoya koyar ve herkese açık adreslerini döndürür."""
+    git("add", *rel_paths)
+    git("commit", "-m", f"Görsel: {rel_paths[0]}")
+    for attempt in range(3):
+        try:
+            git("push")
+            break
+        except subprocess.CalledProcessError:
+            git("pull", "--rebase")
+    sha = git_out("rev-parse", "HEAD")
+    urls = [f"https://raw.githubusercontent.com/{REPO}/{sha}/{p}" for p in rel_paths]
+    for u in urls:
+        print(f"🔗 {u}")
+        for _ in range(12):
+            if requests.head(u, timeout=20).status_code == 200:
+                break
+            time.sleep(5)
+    return urls
+
+
 def post_reel(video_path, caption):
     print("📤 Reels konteyneri oluşturuluyor (doğrudan yükleme)...")
     r = requests.post(f"{BASE_URL}/{INSTAGRAM_ACCOUNT_ID}/media",
@@ -220,23 +256,24 @@ def main():
               f"sadece rakam={(INSTAGRAM_ACCOUNT_ID or '').isdigit()}")
 
     if args.kind == "image":
-        rel = f"media/{stamp}-post{idx}.jpg"
-        make_image(item, os.path.join(ROOT, rel))
-        print(f"🖼️  Görsel üretildi: {rel}")
-        if args.dry_run:
-            return
-        # Görseli repoya koy, Instagram oradan çeksin
-        git("add", rel)
-        git("commit", "-m", f"Görsel: {rel}")
-        git("push")
-        sha = git_out("rev-parse", "HEAD")
-        url = f"https://raw.githubusercontent.com/{REPO}/{sha}/{rel}"
-        print(f"🔗 {url}")
-        for _ in range(12):  # raw adresi birkaç saniyede yayına girer
-            if requests.head(url, timeout=20).status_code == 200:
-                break
-            time.sleep(5)
-        media_id = post_image(url, caption)
+        ptype = item.get("type", "single")
+        if ptype == "packages":
+            paths = make_packages(os.path.join(MEDIA_DIR, f"{stamp}-paketler"))
+            rels = [os.path.relpath(p, ROOT) for p in paths]
+            print(f"🖼️  Paket karuseli üretildi: {len(rels)} sayfa")
+            if args.dry_run:
+                return
+            media_id = post_carousel(push_media(rels), caption)
+        else:
+            rel = f"media/{stamp}-post{idx}.jpg"
+            if ptype == "campaign":
+                make_campaign(os.path.join(ROOT, rel))
+            else:
+                make_image(item, os.path.join(ROOT, rel), variant=state["post"] % 5)
+            print(f"🖼️  Görsel üretildi: {rel} (tasarım {state['post'] % 5})")
+            if args.dry_run:
+                return
+            media_id = post_image(push_media([rel])[0], caption)
     else:
         path = os.path.join(MEDIA_DIR, f"{stamp}-reel{idx}.mp4")
         make_reel(item, path)

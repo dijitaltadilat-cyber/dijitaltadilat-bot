@@ -1,2 +1,2 @@
-Inter yazı tipi (Rasmus Andersson) - SIL Open Font License 1.1
-https://github.com/rsms/inter
+Inter (Rasmus Andersson), Baloo 2 (Ek Type), Nunito (Vernon Adams) - SIL Open Font License 1.1
+https://github.com/google/fonts

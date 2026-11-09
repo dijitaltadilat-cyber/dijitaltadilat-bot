@@ -1,8 +1,8 @@
 """Dijital Tadilat görsel ve Reels üretici.
 
-Görsel: 1080x1080 JPEG (Instagram yalnızca JPEG kabul eder)
-Reels : 1080x1920 MP4, hareketli yazılar, sessiz ses kanalı
-Logo  : assets/logo.png varsa kullanılır, yoksa "dijital tadilat" yazısı basılır.
+Görsel   : 1080x1080 JPEG, 5 farklı tasarım (sırayla döner)
+Paketler : 4 sayfalık kaydırmalı karusel (fiyatlar)
+Reels    : 1080x1920 MP4, hareketli yazılar, logolu kapanış
 """
 import os
 import subprocess
@@ -10,239 +10,423 @@ import subprocess
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-FONT_BOLD = os.path.join(ROOT, "fonts", "Inter-Bold.otf")
-FONT_MED = os.path.join(ROOT, "fonts", "InterDisplay-Medium.otf")
-LOGO_PATH = os.path.join(ROOT, "assets", "logo.png")
+F_HEAD = os.path.join(ROOT, "fonts", "Baloo2-ExtraBold.ttf")
+F_BOLD = os.path.join(ROOT, "fonts", "Nunito-Bold.ttf")
+F_SEMI = os.path.join(ROOT, "fonts", "Nunito-SemiBold.ttf")
+A = lambda n: os.path.join(ROOT, "assets", n)
 
-# Marka renkleri (logo gelince lime tonu logodan alınıp güncellenecek)
-BG = (0, 0, 0)
-LIME = (198, 255, 0)
-WHITE = (255, 255, 255)
-GREY = (163, 163, 163)
+# Marka renkleri (logodan alındı)
+NAVY = (22, 16, 46)
+LIME = (200, 255, 46)
+WHITE = (243, 240, 255)
+MUTED = (178, 172, 210)
+NAVY2 = (38, 30, 72)
+
+PHONE = "0507 295 06 55"
+WA_LINE = f"WhatsApp {PHONE}"
 HANDLE = "@dijitaltadilat"
 
-_font_cache = {}
+_fc, _ic = {}, {}
 
 
 def font(path, size):
-    key = (path, size)
-    if key not in _font_cache:
-        _font_cache[key] = ImageFont.truetype(path, size)
-    return _font_cache[key]
+    k = (path, size)
+    if k not in _fc:
+        _fc[k] = ImageFont.truetype(path, size)
+    return _fc[k]
 
 
-def wrap(draw, text, fnt, max_w):
+def asset(name, max_w=None, max_h=None, color=None, opacity=1.0):
+    """Logo dosyasını boyutlandırır; color verilirse tek renge boyar."""
+    k = (name, max_w, max_h, color, opacity)
+    if k in _ic:
+        return _ic[k].copy()
+    im = Image.open(A(name)).convert("RGBA")
+    if max_w or max_h:
+        im.thumbnail((max_w or 9999, max_h or 9999), Image.LANCZOS)
+    if color:
+        solid = Image.new("RGBA", im.size, color + (255,))
+        solid.putalpha(im.split()[3])
+        im = solid
+    if opacity < 1:
+        im.putalpha(im.split()[3].point(lambda p: int(p * opacity)))
+    _ic[k] = im
+    return im.copy()
+
+
+def wrap(d, text, fnt, max_w):
     lines, line = [], ""
-    for word in text.split():
-        trial = f"{line} {word}".strip()
-        if draw.textlength(trial, font=fnt) <= max_w:
-            line = trial
+    for w in text.split():
+        t = f"{line} {w}".strip()
+        if d.textlength(t, font=fnt) <= max_w:
+            line = t
         else:
             if line:
                 lines.append(line)
-            line = word
+            line = w
     if line:
         lines.append(line)
     return lines
 
 
-def fit_lines(draw, text, path, size, max_w, max_lines, min_size=40):
-    """Metni max_lines satıra sığana kadar küçültür."""
+def fit(d, text, path, size, max_w, max_lines, min_size=36):
     while True:
-        fnt = font(path, size)
-        lines = wrap(draw, text, fnt, max_w)
+        f = font(path, size)
+        lines = wrap(d, text, f, max_w)
         if len(lines) <= max_lines or size <= min_size:
-            return fnt, lines, size
+            return f, lines, size
         size -= 4
 
 
-def load_logo(max_w, max_h):
-    if not os.path.exists(LOGO_PATH):
-        return None
-    logo = Image.open(LOGO_PATH).convert("RGBA")
-    logo.thumbnail((max_w, max_h), Image.LANCZOS)
-    return logo
+def text_block(d, x, y, lines, fnt, lh, fill, center_w=None):
+    for ln in lines:
+        tx = x if center_w is None else x + (center_w - d.textlength(ln, font=fnt)) / 2
+        d.text((tx, y), ln, fill=fill, font=fnt)
+        y += lh
+    return y
 
 
-def draw_brand(img, draw, x, y, max_w=360, max_h=90, color=LIME, scale=1.0):
-    """Sol üst marka alanı: logo ya da yazı."""
-    logo = load_logo(int(max_w * scale), int(max_h * scale))
-    if logo:
-        img.paste(logo, (x, y), logo)
-        return logo.size[1]
-    fnt = font(FONT_BOLD, int(38 * scale))
-    draw.text((x, y), "dijital tadilat", fill=color, font=fnt)
-    return int(46 * scale)
+def lockup(img, x, y, h=78, color=None):
+    """Yatay logo: işaret + yazı."""
+    mark = asset("logo_mark.png", max_h=h, color=color)
+    word = asset("logo_word.png", max_h=int(h * 0.82), color=color)
+    img.paste(mark, (x, y), mark)
+    img.paste(word, (x + mark.size[0] + 18, y + (h - word.size[1]) // 2), word)
+    return mark.size[0] + 18 + word.size[0]
+
+
+def chat_icon(d, x, y, s, fill, hole):
+    d.ellipse([x, y, x + s, y + s], fill=fill)
+    d.polygon([(x + s * 0.12, y + s * 0.70), (x + s * 0.02, y + s * 1.0), (x + s * 0.38, y + s * 0.88)], fill=fill)
+    r = s * 0.07
+    for i in range(3):
+        cx = x + s * (0.30 + 0.20 * i)
+        d.ellipse([cx - r, y + s / 2 - r, cx + r, y + s / 2 + r], fill=hole)
+
+
+def wa_pill(d, x, y, bg, fg, size=36, h=78):
+    f = font(F_BOLD, size)
+    tw = d.textlength(WA_LINE, font=f)
+    w = int(tw + h + 40)
+    d.rounded_rectangle([x, y, x + w, y + h], radius=h // 2, fill=bg)
+    ic = int(h * 0.5)
+    chat_icon(d, x + 24, y + (h - ic) // 2 - 2, ic, fg, bg)
+    d.text((x + 24 + ic + 16, y + (h - size) // 2 - size * 0.18), WA_LINE, fill=fg, font=f)
+    return w
+
+
+def chip(d, x, y, label, color, filled=False, text_color=None):
+    f = font(F_BOLD, 26)
+    w = d.textlength(label, font=f)
+    if filled:
+        d.rounded_rectangle([x, y, x + w + 44, y + 52], radius=26, fill=color)
+    else:
+        d.rounded_rectangle([x, y, x + w + 44, y + 52], radius=26, outline=color, width=3)
+    d.text((x + 22, y + 9), label, fill=text_color or color, font=f)
 
 
 # --------------------------------------------------------------------------
-# Tek görsel (gönderi)
+# Tek görseller: 5 tasarım
 # --------------------------------------------------------------------------
-def make_image(post, out_path):
-    W = 1080
-    img = Image.new("RGB", (W, W), BG)
+W = 1080
+X = 80
+MAXW = 920
+
+
+def _headline(d, post, size=92, lines=4, maxw=MAXW):
+    f, ls, s = fit(d, post["headline"], F_HEAD, size, maxw, lines, min_size=56)
+    return f, ls, int(s * 1.08)
+
+
+def _body(d, post, size=40, lines=3, maxw=MAXW):
+    f, ls, s = fit(d, post["body"], F_SEMI, size, maxw, lines, min_size=30)
+    return f, ls, int(s * 1.38)
+
+
+def v_classic(post):
+    img = Image.new("RGB", (W, W), NAVY)
     d = ImageDraw.Draw(img)
-    X, MAXW = 80, 920
+    lockup(img, X, 80)
+    chip(d, X, 222, post["label"], LIME)
+    hf, hl, hlh = _headline(d, post)
+    bf, bl, blh = _body(d, post)
+    block = len(hl) * hlh + 30 + len(bl) * blh
+    y = 300 + max(0, (590 - block) // 2)
+    y = text_block(d, X, y, hl, hf, hlh, WHITE) + 30
+    text_block(d, X, y, bl, bf, blh, MUTED)
+    wa_pill(d, X, 930, LIME, NAVY)
+    return img
 
-    # Üst: marka
-    d.rectangle([X, 100, X + 100, 108], fill=LIME)
-    draw_brand(img, d, X, 132)
 
-    # Etiket (ör. KAFELER İÇİN)
-    lf = font(FONT_BOLD, 28)
-    label = post["label"]
-    lw = d.textlength(label, font=lf)
-    d.rounded_rectangle([X, 250, X + lw + 44, 302], radius=26, outline=LIME, width=3)
-    d.text((X + 22, 258), label, fill=LIME, font=lf)
+def v_lime(post):
+    img = Image.new("RGB", (W, W), LIME)
+    d = ImageDraw.Draw(img)
+    lockup(img, X, 80, color=NAVY)
+    chip(d, X, 222, post["label"], NAVY)
+    hf, hl, hlh = _headline(d, post, size=100)
+    bf, bl, blh = _body(d, post)
+    block = len(hl) * hlh + 30 + len(bl) * blh
+    y = 300 + max(0, (590 - block) // 2)
+    y = text_block(d, X, y, hl, hf, hlh, NAVY) + 30
+    text_block(d, X, y, bl, bf, blh, NAVY2)
+    wa_pill(d, X, 930, NAVY, LIME)
+    return img
 
-    # Başlık + açıklama, ortalanmış blok
-    hf, hlines, hsize = fit_lines(d, post["headline"], FONT_BOLD, 88, MAXW, 4)
-    bf, blines, bsize = fit_lines(d, post["body"], FONT_MED, 40, MAXW, 3, min_size=32)
-    h_lh, b_lh = int(hsize * 1.18), int(bsize * 1.4)
-    block_h = len(hlines) * h_lh + 36 + len(blines) * b_lh
-    top, bottom = 340, 880
-    y = top + max(0, (bottom - top - block_h) // 2)
-    for ln in hlines:
-        d.text((X, y), ln, fill=WHITE, font=hf)
-        y += h_lh
-    y += 36
-    for ln in blines:
-        d.text((X, y), ln, fill=GREY, font=bf)
-        y += b_lh
 
-    # Alt: çağrı + kullanıcı adı
-    cf = font(FONT_BOLD, 34)
-    cta = "DM'den yaz, konuşalım"
-    cw = d.textlength(cta, font=cf)
-    d.rounded_rectangle([X, 925, X + cw + 64, 995], radius=35, fill=LIME)
-    d.text((X + 32, 940), cta, fill=BG, font=cf)
-    mf = font(FONT_MED, 32)
-    d.text((W - 80 - d.textlength(HANDLE, font=mf), 944), HANDLE, fill=GREY, font=mf)
+def v_watermark(post):
+    img = Image.new("RGB", (W, W), NAVY)
+    big = asset("logo_mark.png", max_h=760, opacity=0.13)
+    img.paste(big, (W - big.size[0] + 120, W - big.size[1] + 60), big)
+    d = ImageDraw.Draw(img)
+    mark = asset("logo_mark.png", max_h=70)
+    img.paste(mark, (X, 80), mark)
+    d.text((X + mark.size[0] + 20, 92), post["label"], fill=LIME, font=font(F_BOLD, 30))
+    hf, hl, hlh = _headline(d, post, size=96, maxw=860)
+    bf, bl, blh = _body(d, post, maxw=800)
+    block = len(hl) * hlh + 34 + len(bl) * blh
+    y = 220 + max(0, (660 - block) // 2)
+    y = text_block(d, X, y, hl, hf, hlh, LIME) + 34
+    text_block(d, X, y, bl, bf, blh, WHITE)
+    wa_pill(d, X, 930, WHITE, NAVY)
+    return img
 
+
+def v_card(post):
+    img = Image.new("RGB", (W, W), NAVY)
+    d = ImageDraw.Draw(img)
+    lockup(img, X, 64, h=64)
+    d.rounded_rectangle([60, 180, W - 60, 890], radius=44, fill=WHITE)
+    chip(d, 110, 230, post["label"], NAVY, filled=True, text_color=LIME)
+    hf, hl, hlh = _headline(d, post, size=84, maxw=820)
+    bf, bl, blh = _body(d, post, size=38, maxw=820)
+    block = len(hl) * hlh + 28 + len(bl) * blh
+    y = 310 + max(0, (540 - block) // 2)
+    y = text_block(d, 110, y, hl, hf, hlh, NAVY) + 28
+    text_block(d, 110, y, bl, bf, blh, NAVY2)
+    wa_pill(d, X, 930, LIME, NAVY, size=34, h=72)
+    d.text((W - X - d.textlength(HANDLE, font=font(F_SEMI, 30)), 950), HANDLE,
+           fill=MUTED, font=font(F_SEMI, 30))
+    return img
+
+
+def v_split(post):
+    img = Image.new("RGB", (W, W), NAVY)
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, W, 620], fill=LIME)
+    mark = asset("logo_mark.png", max_h=64, color=NAVY)
+    img.paste(mark, (X, 70), mark)
+    d.text((X + mark.size[0] + 18, 80), post["label"], fill=NAVY, font=font(F_BOLD, 30))
+    hf, hl, hlh = _headline(d, post, size=96, lines=4)
+    y = 170 + max(0, (420 - len(hl) * hlh) // 2)
+    text_block(d, X, y, hl, hf, hlh, NAVY)
+    bf, bl, blh = _body(d, post, size=40, lines=2)
+    text_block(d, X, 680, bl, bf, blh, WHITE)
+    wa_pill(d, X, 900, LIME, NAVY)
+    word = asset("logo_word.png", max_h=70)
+    img.paste(word, (W - X - word.size[0], 904), word)
+    return img
+
+
+VARIANTS = [v_classic, v_lime, v_watermark, v_card, v_split]
+
+
+def make_image(post, out_path, variant=0):
+    img = VARIANTS[variant % len(VARIANTS)](post)
     img.save(out_path, "JPEG", quality=94)
     return out_path
 
 
 # --------------------------------------------------------------------------
-# Reels (hareketli video)
+# Paketler (karusel) ve kampanya
+# --------------------------------------------------------------------------
+PACKAGES = [
+    {"name": "BAŞLANGIÇ", "price": "3.990", "tag": None,
+     "items": ["Ayda 8 gönderi", "Haftada 3 story", "Profil tadilatı", "Aylık mini rapor"]},
+    {"name": "STANDART", "price": "6.990", "tag": "EN ÇOK TERCİH EDİLEN",
+     "items": ["Ayda 12 gönderi + 4 Reels", "Haftada 5 story", "Google İşletme profili",
+               "Yorum ve mesaj takibi", "Aylık rapor"]},
+    {"name": "PRO", "price": "10.990", "tag": None,
+     "items": ["Ayda 16 gönderi + 8 Reels", "Her gün story", "Ayda 1 dükkânda çekim",
+               "Reklam kurulumu ve yönetimi", "Aylık strateji görüşmesi"]},
+]
+
+
+def _check(d, x, y, s, color):
+    d.line([(x, y + s * 0.55), (x + s * 0.38, y + s * 0.9), (x + s, y + s * 0.1)], fill=color, width=7)
+
+
+def packages_cover():
+    img = Image.new("RGB", (W, W), NAVY)
+    d = ImageDraw.Draw(img)
+    big = asset("logo_mark.png", max_h=520)
+    img.paste(big, ((W - big.size[0]) // 2, 90), big)
+    f = font(F_HEAD, 120)
+    t = "Paketler & Fiyatlar"
+    lines = wrap(d, t, f, 940)
+    y = 640
+    y = text_block(d, 70, y, lines, f, 118, WHITE, center_w=940)
+    s = "Kaydır, dükkânına uygun paketi seç"
+    sf = font(F_SEMI, 38)
+    d.text(((W - d.textlength(s, font=sf)) / 2, 930), s, fill=LIME, font=sf)
+    return img
+
+
+def package_slide(p):
+    hl = p["tag"] is not None
+    bg, fg, sub, acc = (LIME, NAVY, NAVY2, NAVY) if hl else (NAVY, WHITE, MUTED, LIME)
+    img = Image.new("RGB", (W, W), bg)
+    d = ImageDraw.Draw(img)
+    lockup(img, X, 70, h=60, color=NAVY if hl else None)
+    if p["tag"]:
+        chip(d, X, 170, p["tag"], NAVY, filled=True, text_color=LIME)
+    d.text((X, 240), p["name"], fill=acc, font=font(F_BOLD, 46))
+    pf = font(F_HEAD, 170)
+    d.text((X, 280), p["price"], fill=fg, font=pf)
+    pw = d.textlength(p["price"], font=pf)
+    d.text((X + pw + 16, 360), "₺ / ay", fill=sub, font=font(F_BOLD, 52))
+    y = 520
+    itf = font(F_SEMI, 44)
+    for it in p["items"]:
+        _check(d, X, y + 12, 34, acc)
+        d.text((X + 60, y), it, fill=fg, font=itf)
+        y += 70
+    wa_pill(d, X, 930, NAVY if hl else LIME, LIME if hl else NAVY, size=34, h=72)
+    return img
+
+
+def make_packages(out_prefix):
+    slides = [packages_cover()] + [package_slide(p) for p in PACKAGES] + [campaign_image()]
+    paths = []
+    for i, im in enumerate(slides):
+        p = f"{out_prefix}-{i}.jpg"
+        im.save(p, "JPEG", quality=94)
+        paths.append(p)
+    return paths
+
+
+def campaign_image():
+    img = Image.new("RGB", (W, W), LIME)
+    d = ImageDraw.Draw(img)
+    lockup(img, X, 80, color=NAVY)
+    chip(d, X, 210, "AÇILIŞA ÖZEL", NAVY, filled=True, text_color=LIME)
+    d.text((X, 270), "İlk 5 esnafa", fill=NAVY, font=font(F_HEAD, 96))
+    d.text((X - 6, 340), "%50", fill=NAVY, font=font(F_HEAD, 300))
+    d.text((X, 660), "ilk ay indirim", fill=NAVY, font=font(F_HEAD, 96))
+    sf = font(F_SEMI, 38)
+    d.text((X, 790), "Taahhüt yok · Ücretsiz ilk görüşme", fill=NAVY2, font=sf)
+    wa_pill(d, X, 900, NAVY, LIME)
+    return img
+
+
+def make_campaign(out_path):
+    campaign_image().save(out_path, "JPEG", quality=94)
+    return out_path
+
+
+# --------------------------------------------------------------------------
+# Reels
 # --------------------------------------------------------------------------
 FPS = 30
 RW, RH = 1080, 1920
 
 
-def ease_out(t):
+def ease(t):
     t = max(0.0, min(1.0, t))
     return 1 - (1 - t) ** 3
 
 
-def dim(color, a):
-    """Siyah zemin üstünde saydamlık: rengi alfa oranında karart."""
-    return tuple(int(c * a) for c in color)
+def mix(c, a, bg=NAVY):
+    return tuple(int(bg[i] + (c[i] - bg[i]) * a) for i in range(3))
 
 
-def _layout_slides(slides):
-    probe = ImageDraw.Draw(Image.new("RGB", (10, 10)))
-    MAXW = 920
+def _layout(slides):
+    d = ImageDraw.Draw(Image.new("RGB", (10, 10)))
     blocks = []
-    hook_f, hook_lines, hook_size = fit_lines(probe, slides[0], FONT_BOLD, 112, MAXW, 4)
-    blocks.append((hook_f, hook_lines, int(hook_size * 1.15), WHITE))
-    for s in slides[1:]:
-        f, lines, size = fit_lines(probe, s, FONT_BOLD, 84, MAXW, 3, min_size=52)
-        blocks.append((f, lines, int(size * 1.25), LIME if s[:2].strip(". ").isdigit() else WHITE))
-    # Kalan satırlar gri tonda okunurluğu bozmasın diye: hook sonrası satırlar beyaz,
-    # numaralı listeler lime.
-    gap_after_hook, gap = 90, 44
-    total = sum(len(b[1]) * b[2] for b in blocks) + gap_after_hook + gap * (len(blocks) - 2)
-    return blocks, total, gap_after_hook, gap
+    f, ls, s = fit(d, slides[0], F_HEAD, 124, 920, 4, min_size=80)
+    blocks.append((f, ls, int(s * 1.05), WHITE))
+    for t in slides[1:]:
+        f, ls, s = fit(d, t, F_HEAD, 88, 920, 3, min_size=56)
+        num = t[:2].strip(". ").isdigit()
+        blocks.append((f, ls, int(s * 1.1), LIME if num or "₺" in t or "%" in t else WHITE))
+    gh, g = 120, 40
+    total = sum(len(b[1]) * b[2] for b in blocks) + gh + g * (len(blocks) - 2)
+    return blocks, total, gh, g
 
 
-def make_reel(reel, out_path, slide_dur=1.6, hold=1.4, end_dur=2.6):
+def make_reel(reel, out_path, slide_dur=1.6, hold=1.4, end_dur=3.0):
     slides = reel["slides"]
-    blocks, total_h, gap_hook, gap = _layout_slides(slides)
-    # Güvenli alan: Instagram arayüzü üstte ~250, altta ~420 px kaplar
-    safe_top, safe_bottom = 360, 1450
-    start_y = safe_top + max(0, (safe_bottom - safe_top - total_h) // 2)
-
-    text_dur = 0.35 + slide_dur * len(slides) + hold
+    blocks, total_h, gh, g = _layout(slides)
+    top, bottom = 380, 1450
+    sy = top + max(0, (bottom - top - total_h) // 2)
+    text_dur = 0.4 + slide_dur * len(slides) + hold
     total = text_dur + end_dur
-    n_frames = int(total * FPS)
+    n = int(total * FPS)
 
-    cmd = [
-        "ffmpeg", "-y", "-loglevel", "error",
-        "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{RW}x{RH}", "-r", str(FPS), "-i", "-",
-        "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-        "-shortest",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
-        "-profile:v", "high", "-c:a", "aac", "-b:a", "128k",
-        "-movflags", "+faststart", out_path,
-    ]
+    cmd = ["ffmpeg", "-y", "-loglevel", "error",
+           "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{RW}x{RH}", "-r", str(FPS), "-i", "-",
+           "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-shortest",
+           "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+           "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", out_path]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 
-    cta_f = font(FONT_BOLD, 52)
-    handle_f = font(FONT_MED, 46)
-    tag_f = font(FONT_MED, 40)
+    bg_mark = asset("logo_mark.png", max_h=900, opacity=0.07)
+    head_lock = Image.new("RGBA", (700, 80), (0, 0, 0, 0))
+    lockup(head_lock, 0, 0, h=72)
+    full_logo = asset("logo.png", max_h=560)
 
-    for i in range(n_frames):
+    for i in range(n):
         t = i / FPS
-        img = Image.new("RGB", (RW, RH), BG)
+        img = Image.new("RGB", (RW, RH), NAVY)
+        # yavaşça kayan dev işaret (arka plan hareketi)
+        img.paste(bg_mark, (int(RW - bg_mark.size[0] + 260 - t * 18), int(RH - bg_mark.size[1] - 120 + t * 10)), bg_mark)
         d = ImageDraw.Draw(img)
-
-        # Üst ilerleme çubuğu
-        d.rectangle([0, 0, int(RW * t / total), 10], fill=LIME)
+        d.rectangle([0, 0, int(RW * t / total), 12], fill=LIME)
 
         if t < text_dur:
-            # Metin çıkışı (son 0.35 sn sönme)
-            fade_out = 1 - ease_out((t - (text_dur - 0.35)) / 0.35) if t > text_dur - 0.35 else 1.0
-            draw_brand(img, d, 80, 200) if fade_out > 0.99 else None
-            y = start_y
-            for bi, (f, lines, lh, color) in enumerate(blocks):
-                appear = 0.25 + bi * slide_dur
-                for li, ln in enumerate(lines):
-                    lt = (t - appear - li * 0.08) / 0.45
-                    a = ease_out(lt) * fade_out
+            fo = 1 - ease((t - (text_dur - 0.4)) / 0.4) if t > text_dur - 0.4 else 1.0
+            ha = ease(t / 0.5) * fo
+            if ha > 0:
+                hl = head_lock.copy()
+                hl.putalpha(hl.split()[3].point(lambda p: int(p * ha)))
+                img.paste(hl, (80, 210), hl)
+            y = sy
+            for bi, (f, ls, lh, col) in enumerate(blocks):
+                ap = 0.3 + bi * slide_dur
+                for li, ln in enumerate(ls):
+                    lt = (t - ap - li * 0.08) / 0.45
+                    a = ease(lt) * fo
                     if a > 0:
-                        dy = int((1 - ease_out(lt)) * 50)
-                        d.text((80, y + dy), ln, fill=dim(color, a), font=f)
+                        d.text((80, y + int((1 - ease(lt)) * 56)), ln, fill=mix(col, a), font=f)
                     y += lh
                 if bi == 0:
-                    # Hook altında büyüyen lime çizgi
-                    bt = ease_out((t - appear - 0.3) / 0.5)
+                    bt = ease((t - ap - 0.3) / 0.5)
                     if bt > 0:
-                        d.rectangle([80, y + 18, 80 + int(160 * bt), 28 + y],
-                                    fill=dim(LIME, fade_out))
-                    y += gap_hook
+                        d.rounded_rectangle([80, y + 44, 80 + int(180 * bt), y + 58], radius=7, fill=mix(LIME, fo))
+                    y += gh
                 else:
-                    y += gap
+                    y += g
         else:
-            # Kapanış kartı
             et = t - text_dur
-            a = ease_out(et / 0.5)
-            s = 0.85 + 0.15 * ease_out(et / 0.6)
-            logo = load_logo(int(640 * s), int(220 * s))
-            cy = 760
-            if logo:
-                if a < 1:
-                    alpha = logo.split()[3].point(lambda p: int(p * a))
-                    logo.putalpha(alpha)
-                img.paste(logo, ((RW - logo.size[0]) // 2, cy - logo.size[1] // 2), logo)
-            else:
-                bf = font(FONT_BOLD, int(110 * s))
-                word = "dijital tadilat"
-                d.text(((RW - d.textlength(word, font=bf)) // 2, cy - int(60 * s)), word,
-                       fill=dim(LIME, a), font=bf)
+            a = ease(et / 0.5)
+            s = 0.8 + 0.2 * ease(et / 0.7)
+            lg = full_logo.resize((int(full_logo.size[0] * s), int(full_logo.size[1] * s)), Image.LANCZOS)
+            if a < 1:
+                lg.putalpha(lg.split()[3].point(lambda p: int(p * a)))
+            img.paste(lg, ((RW - lg.size[0]) // 2, 470 - (lg.size[1] - 560) // 2), lg)
+            tf = font(F_SEMI, 44)
             line = "Esnafın sosyal medya ortağı"
-            d.text(((RW - d.textlength(line, font=tag_f)) // 2, 900), line, fill=dim(GREY, a), font=tag_f)
-
-            pt = ease_out((et - 0.4) / 0.5)
+            d.text(((RW - d.textlength(line, font=tf)) / 2, 1080), line, fill=mix(MUTED, a), font=tf)
+            pt = ease((et - 0.5) / 0.5)
             if pt > 0:
-                cta = "DM'den yaz, konuşalım"
-                cw = d.textlength(cta, font=cta_f)
-                px = (RW - cw - 90) // 2
-                py = 1060 + int((1 - pt) * 40)
-                d.rounded_rectangle([px, py, px + cw + 90, py + 104], radius=52, fill=dim(LIME, pt))
-                d.text((px + 45, py + 24), cta, fill=BG, font=cta_f)
-                d.text(((RW - d.textlength(HANDLE, font=handle_f)) // 2, py + 150), HANDLE,
-                       fill=dim(WHITE, pt), font=handle_f)
+                py = 1170 + int((1 - pt) * 40)
+                cf = font(F_HEAD, 64)
+                cta = "WhatsApp'tan yaz"
+                cw = d.textlength(cta, font=cf)
+                px = (RW - cw - 100) / 2
+                d.rounded_rectangle([px, py, px + cw + 100, py + 120], radius=60, fill=mix(LIME, pt))
+                d.text((px + 50, py + 18), cta, fill=NAVY, font=cf)
+                nf = font(F_HEAD, 84)
+                d.text(((RW - d.textlength(PHONE, font=nf)) / 2, py + 160), PHONE, fill=mix(WHITE, pt), font=nf)
 
         proc.stdin.write(img.tobytes())
 
@@ -260,9 +444,12 @@ if __name__ == "__main__":
         content = json.load(fh)
     os.makedirs("preview", exist_ok=True)
     which = sys.argv[1] if len(sys.argv) > 1 else "all"
+    singles = [p for p in content["posts"] if p.get("type", "single") == "single"]
     if which in ("all", "image"):
-        for idx in (0, 2, 9):
-            make_image(content["posts"][idx], f"preview/post_{idx}.jpg")
+        for v in range(len(VARIANTS)):
+            make_image(singles[v + 1], f"preview/v{v}.jpg", v)
+    if which in ("all", "packages"):
+        make_packages("preview/pkg")
     if which in ("all", "reel"):
-        make_reel(content["reels"][1], "preview/reel_1.mp4")
+        make_reel(content["reels"][1], "preview/reel.mp4")
     print("Önizlemeler preview/ klasöründe.")

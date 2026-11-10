@@ -1,5 +1,5 @@
 {
-  "post": 9,
+  "post": 10,
   "reel": 6,
   "history": [
     {
@@ -111,6 +111,13 @@
       "time": "2026-11-10T09:26+03:00",
       "kind": "special_ataturk",
       "media_id": "17891010123687084"
+    },
+    {
+      "time": "2026-11-11T01:08+03:00",
+      "kind": "image",
+      "index": 9,
+      "district": "Buca",
+      "media_id": "17962395879250756"
     }
   ],
   "slots_done": [

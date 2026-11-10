@@ -354,18 +354,31 @@ def _layout(slides):
     return blocks, total, gh, g
 
 
-def make_reel(reel, out_path, slide_dur=1.6, hold=1.4, end_dur=3.0):
+def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
+    # Zamanlama müziğin vuruşlarına göre: her yazı 3 vuruşta bir gelir
+    import tempfile
+    import zlib
+
+    from music import BEAT, make_track
+    slide_dur = slide_dur or 3 * BEAT
+    hold = hold or 2 * BEAT
+    end_dur = end_dur or 6 * BEAT
     slides = reel["slides"]
     blocks, total_h, gh, g = _layout(slides)
     top, bottom = 380, 1450
     sy = top + max(0, (bottom - top - total_h) // 2)
-    text_dur = 0.4 + slide_dur * len(slides) + hold
+    lead = BEAT  # ilk yazı ikinci vuruşta, sonrakiler her 3 vuruşta bir
+    text_dur = lead + slide_dur * len(slides) + hold
     total = text_dur + end_dur
     n = int(total * FPS)
 
+    seed = zlib.crc32(" ".join(slides).encode()) % 1000
+    wav = os.path.join(tempfile.mkdtemp(), "m.wav")
+    make_track(total + 0.2, seed, wav)
+
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{RW}x{RH}", "-r", str(FPS), "-i", "-",
-           "-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-shortest",
+           "-i", wav, "-shortest",
            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
            "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", out_path]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
@@ -392,7 +405,7 @@ def make_reel(reel, out_path, slide_dur=1.6, hold=1.4, end_dur=3.0):
                 img.paste(hl, (80, 210), hl)
             y = sy
             for bi, (f, ls, lh, col) in enumerate(blocks):
-                ap = 0.3 + bi * slide_dur
+                ap = lead + bi * slide_dur - 0.08
                 for li, ln in enumerate(ls):
                     lt = (t - ap - li * 0.08) / 0.45
                     a = ease(lt) * fo

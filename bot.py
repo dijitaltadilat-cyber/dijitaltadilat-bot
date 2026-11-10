@@ -289,13 +289,11 @@ def post_reel(video_path, caption):
 # dakikada bir kontrol eder ve saati geçmiş ama yapılmamış paylaşımı yapar.
 SLOTS = [
     ("08:37", "image"),  # dükkân açılışı, çay saati
-    ("11:17", "reel"),   # öğle öncesi sakin saat
     ("13:37", "image"),  # öğle arası
-    ("17:17", "image"),  # mesai sonu yaklaşırken
     ("20:43", "reel"),   # kepenk kapandı, Reels saati
 ]
 SPECIAL_DAYS = {"11-10": [("09:05", "special_ataturk")]}  # o gün sadece bunlar
-CATCH_UP_HOURS = 2.5
+CATCH_UP_HOURS = 4
 
 
 def due_slot(state, now=None):

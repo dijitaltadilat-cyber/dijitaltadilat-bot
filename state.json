@@ -1,6 +1,6 @@
 {
   "post": 10,
-  "reel": 6,
+  "reel": 7,
   "history": [
     {
       "time": "2026-11-09T03:38+03:00",
@@ -118,6 +118,13 @@
       "index": 9,
       "district": "Buca",
       "media_id": "17962395879250756"
+    },
+    {
+      "time": "2026-11-11T01:13+03:00",
+      "kind": "reel",
+      "index": 6,
+      "district": "Bayraklı",
+      "media_id": "18156804517543905"
     }
   ],
   "slots_done": [

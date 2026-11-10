@@ -106,6 +106,11 @@
       "index": 5,
       "district": "Bornova",
       "media_id": "18062841479546001"
+    },
+    {
+      "time": "2026-11-10T09:26+03:00",
+      "kind": "special_ataturk",
+      "media_id": "17891010123687084"
     }
   ],
   "slots_done": [

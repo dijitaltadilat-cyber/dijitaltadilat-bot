@@ -153,6 +153,11 @@
       "index": 7,
       "district": "Gaziemir",
       "media_id": "18035862722672958"
+    },
+    {
+      "time": "2026-11-11T10:29+03:00",
+      "kind": "special_siparis",
+      "media_id": "18381116443209366"
     }
   ],
   "slots_done": [

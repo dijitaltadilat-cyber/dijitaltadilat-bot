@@ -2,14 +2,23 @@
 
 @dijitaltadilat Instagram hesabına her gün otomatik paylaşım yapar. Bilgisayarın açık olması gerekmez, GitHub Actions üzerinde çalışır.
 
-## Takvim (Türkiye saati)
+## Takvim (Türkiye saati, her gün)
 | Ne | Ne zaman | Neden |
 |---|---|---|
-| Görsel gönderi | Pzt–Cmt 08:37 | Esnaf dükkânı açarken telefona bakıyor |
-| Reels videosu | Sal/Per/Cmt 20:43 | Kepenk kapandı, Reels izleme saati |
-| Reels videosu | Pazar 12:17 | Pazar günü rahat kaydırma saati |
+| Görsel gönderi | 08:37 | Esnaf dükkânı açarken telefona bakıyor |
+| Görsel gönderi | 13:37 | Öğle arası |
+| Reels videosu | 20:43 | Kepenk kapandı, Reels izleme saati |
 
-GitHub zamanlanmış işleri yoğunlukta 5–20 dk gecikmeli başlatabilir.
+Saatler `slots.py` içinde.
+
+## Gecikmesiz çalışma düzeni
+GitHub zamanlanmış işleri saat başı gibi seyrek ve gecikmeli başlatabiliyor, bu yüzden:
+- **`kapi` işi** her 5 dakikada bir saniyeler içinde biter (apt/pip yok), paylaşım saatine
+  75 dk kala ya da saat geçmişse `paylas` işini başlatır.
+- **`paylas` işi** kurulumu önceden yapar, saati bekler ve paylaşımı tam saatinde atar.
+- Bir çalıştırma atlanırsa sonraki yakalar; kaçan paylaşım 4 saat içinde telafi edilir.
+- ffmpeg sadece Reels için kurulur; apt takılırsa pip ile gelen ffmpeg'e geçilir.
+- Paylaşım sonrası `state.json` gönderilemezse çalışma hata verir (aynı saat tekrar paylaşılmasın).
 
 ## Dosyalar
 - `content/content.json` → gönderi ve Reels metinleri, İzmir ilçeleri (her paylaşımda sıradaki ilçe hedeflenir)

@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from render import PHONE, make_campaign, make_image, make_packages, make_reel
+from slots import due_slot
 
 API_VERSION = "v26.0"
 BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
@@ -255,12 +256,7 @@ def post_special_reel(name, dry_run):
     save_json(STATE_PATH, state)
     git("add", "state.json")
     git("commit", "-m", f"Özel paylaşım: {name}")
-    for _ in range(3):
-        try:
-            git("push")
-            break
-        except subprocess.CalledProcessError:
-            git("pull", "--rebase")
+    push_with_retry()
 
 
 def post_reel(video_path, caption):
@@ -284,29 +280,27 @@ def post_reel(video_path, caption):
     return publish(cid)
 
 
-# ---------------------------------------------------------- paylaşım saatleri
-# Türkiye saati. GitHub bir çalıştırmayı geciktirse/atlasa bile bot her 20
-# dakikada bir kontrol eder ve saati geçmiş ama yapılmamış paylaşımı yapar.
-SLOTS = [
-    ("08:37", "image"),  # dükkân açılışı, çay saati
-    ("13:37", "image"),  # öğle arası
-    ("20:43", "reel"),   # kepenk kapandı, Reels saati
-]
-SPECIAL_DAYS = {"11-10": [("09:05", "special_ataturk")]}  # o gün sadece bunlar
-CATCH_UP_HOURS = 4
+# Paylaşım saatleri ve "şimdi ne yapılmalı" mantığı slots.py içinde.
 
 
-def due_slot(state, now=None):
-    now = now or datetime.now(TR)
-    date = now.strftime("%Y-%m-%d")
-    done = set(state.get("slots_done", []))
-    for hhmm, kind in SPECIAL_DAYS.get(now.strftime("%m-%d"), SLOTS):
-        h, m = map(int, hhmm.split(":"))
-        t = now.replace(hour=h, minute=m, second=0, microsecond=0)
-        key = f"{date} {hhmm}"
-        if t <= now <= t + timedelta(hours=CATCH_UP_HOURS) and key not in done:
-            return key, kind
-    return None
+def push_with_retry(tries=4):
+    """state.json'ı gönderir; çakışırsa bizimkini koruyarak yeniden dener.
+
+    Paylaşım yapıldı ama kayıt gitmezse bot aynı saati tekrar paylaşırdı;
+    bu yüzden başarısız olursa çalışma hata verir (GitHub e-posta atar).
+    """
+    for i in range(tries):
+        try:
+            git("push")
+            return
+        except subprocess.CalledProcessError:
+            time.sleep(3 * (i + 1))
+            try:
+                git("pull", "--rebase", "-X", "theirs")
+            except subprocess.CalledProcessError:
+                subprocess.run(["git", "rebase", "--abort"], cwd=ROOT)
+    fail("state.json depoya gönderilemedi! Paylaşım yapıldı ama kayıt eksik; "
+         "aynı saat tekrar paylaşılmasın diye elle kontrol et.")
 
 
 def mark_slot_done(slot_key):
@@ -317,12 +311,7 @@ def mark_slot_done(slot_key):
     save_json(STATE_PATH, state)
     git("add", "state.json")
     git("commit", "-m", f"Saat tamamlandı: {slot_key}")
-    for _ in range(3):
-        try:
-            git("push")
-            return
-        except subprocess.CalledProcessError:
-            git("pull", "--rebase")
+    push_with_retry()
 
 
 # --------------------------------------------------------------------- akış
@@ -414,7 +403,7 @@ def main():
     save_json(STATE_PATH, state)
     git("add", "state.json")
     git("commit", "-m", f"Paylaşıldı: {args.kind} #{idx} ({district['name']})")
-    git("push")
+    push_with_retry()
     print("=== Tamamlandı ===")
     warn_if_token_expiring()
 

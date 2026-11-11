@@ -1,11 +1,19 @@
 name: Instagram Bot
 
-# Bot her 20 dakikada bir uyanır; paylaşım saati geldiyse (ya da GitHub
-# gecikmesi yüzünden kaçtıysa) paylaşımı yapar. Saatler bot.py içinde (TR):
-#   08:37 görsel · 13:07 görsel · 20:43 Reels · 10 Kasım: sadece 09:05 anma
+# Paylaşım saatleri (Türkiye saati) slots.py içinde:
+#   08:37 görsel · 13:37 görsel · 20:43 Reels
+#
+# Gecikmesiz çalışma düzeni:
+#  1) "kapi" işi her 5 dakikada bir, saniyeler içinde biter (apt/pip yok, sadece
+#     slots.py). Paylaşım saatine LOOKAHEAD_MIN dakika kalmışsa ya da saat
+#     geçmiş ama paylaşım yapılmamışsa "paylas" işini başlatır.
+#  2) "paylas" işi kurulumu (gerekirse ffmpeg'i) önceden yapar, saati bekler ve
+#     paylaşımı tam saatinde atar.
+#  3) GitHub zamanlayıcıyı geciktirse ya da bazı çalıştırmaları atlasa da sonraki
+#     çalıştırma yakalar; kaçan paylaşım 4 saat içinde telafi edilir.
 on:
   schedule:
-    - cron: "7,27,47 * * * *"
+    - cron: "2-59/5 * * * *"
   workflow_dispatch:
     inputs:
       kind:
@@ -21,54 +29,117 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: instagram-bot
-  cancel-in-progress: false
-
 jobs:
-  post-to-instagram:
+  kapi:
+    name: Paylaşım zamanı yaklaştı mı?
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 3
+    outputs:
+      needed: ${{ steps.slot.outputs.needed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kontrol et
+        id: slot
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          else
+            python3 slots.py | tee -a "$GITHUB_OUTPUT"
+          fi
+
+  paylas:
+    name: Paylaş
+    needs: kapi
+    if: needs.kapi.outputs.needed == 'true'
+    runs-on: ubuntu-latest
+    # en fazla 75 dk bekleme + kurulum + Reels yükleme/işleme payı
+    timeout-minutes: 120
+    # Aynı anda tek paylaşım: sıradaki çalışma, öncekinin state.json kaydını görür.
+    concurrency:
+      group: instagram-bot
+      cancel-in-progress: false
 
     steps:
-      - name: Depoyu checkout et
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      # Kuyrukta beklerken paylaşım başka bir çalışmada yapılmış olabilir.
+      - name: Hâlâ yapılacak paylaşım var mı?
+        id: slot
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            kind="${{ inputs.kind }}"
+            video=true
+            if [ "$kind" = "image" ] || [ "$kind" = "stories" ]; then video=false; fi
+            printf 'needed=true\nat=0\nvideo=%s\n' "$video" >> "$GITHUB_OUTPUT"
+          else
+            python3 slots.py | tee -a "$GITHUB_OUTPUT"
+          fi
 
       - name: Python kur
+        if: steps.slot.outputs.needed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Bağımlılıkları yükle
+        if: steps.slot.outputs.needed == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install requests pillow numpy
-          command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
 
-      - name: Paylaşım türünü belirle
-        id: kind
+      # Sadece video gerekiyorsa. Ubuntu yansısı takılırsa iş asılı kalmasın diye
+      # zaman aşımı var; olmazsa pip ile gelen ffmpeg'e düşer.
+      - name: ffmpeg kur
+        if: steps.slot.outputs.needed == 'true' && steps.slot.outputs.video == 'true'
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "kind=${{ inputs.kind }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "kind=auto" >> "$GITHUB_OUTPUT"
+          if command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null; then
+            echo "ffmpeg hazır"; exit 0
           fi
+          APT="-o Acquire::Retries=3 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15"
+          if sudo timeout 180 apt-get $APT update -qq \
+             && sudo timeout 300 apt-get $APT install -y -qq --no-install-recommends ffmpeg; then
+            echo "ffmpeg apt ile kuruldu"; exit 0
+          fi
+          echo "::warning::apt ile ffmpeg kurulamadı, pip yedeğine geçiliyor"
+          pip install imageio-ffmpeg
+          mkdir -p "$HOME/ffbin"
+          ln -sf "$(python -c 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())')" "$HOME/ffbin/ffmpeg"
+          echo "$HOME/ffbin" >> "$GITHUB_PATH"
+          "$HOME/ffbin/ffmpeg" -version | head -1
 
       - name: Git kimliği
+        if: steps.slot.outputs.needed == 'true'
         run: |
           git config user.name "dijitaltadilat-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Paylaşım saatini bekle
+        if: steps.slot.outputs.needed == 'true'
+        run: |
+          at=${{ steps.slot.outputs.at }}
+          now=$(date +%s)
+          if [ "$at" -gt "$now" ]; then
+            echo "⏳ $((at - now)) sn sonra paylaşılacak"
+            sleep $((at - now))
+          fi
+
       - name: Botu çalıştır
+        if: steps.slot.outputs.needed == 'true'
         env:
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            python check_token.py || true
-            python bot.py --kind "${{ steps.kind.outputs.kind }}" --dry-run
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            kind="${{ inputs.kind }}"; dry="${{ inputs.dry_run }}"
           else
-            python bot.py --kind "${{ steps.kind.outputs.kind }}"
+            kind="auto"; dry="false"
+          fi
+          if [ "$dry" = "true" ]; then
+            python check_token.py || true
+            python bot.py --kind "$kind" --dry-run
+          else
+            python bot.py --kind "$kind"
           fi
 
       - name: Deneme çıktısını sakla

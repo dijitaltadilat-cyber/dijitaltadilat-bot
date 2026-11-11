@@ -328,7 +328,7 @@ def mark_slot_done(slot_key):
 # --------------------------------------------------------------------- akış
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--kind", choices=["auto", "image", "reel", "stories", "special_ataturk"], required=True)
+    ap.add_argument("--kind", choices=["auto", "image", "reel", "stories", "special_ataturk", "special_siparis"], required=True)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 

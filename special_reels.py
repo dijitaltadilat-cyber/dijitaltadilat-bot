@@ -347,6 +347,10 @@ CAPTIONS = {
     "ataturk": ("Aramızdan ayrılışının 88. yılında Cumhuriyetimizin kurucusu "
                 "Gazi Mustafa Kemal Atatürk'ü saygı, minnet ve özlemle anıyoruz. 🇹🇷\n\n"
                 "#10Kasım #Atatürk #10Kasım1938 #UnutmadıkUnutmayacağız #izmir"),
+    "siparis": ("ÖRNEK TASARIM: Restoranlar için online sipariş sistemi yapabiliyoruz. "
+                "Müşteriler menüden seçip web sitenden sipariş verir, sipariş mutfağa anında düşer.\n\n"
+                "Görüşme ücretsiz. WhatsApp: 0507 295 06 55 · dijitaltadilat.com\n\n"
+                "#webyazılım #siparişsistemi #restoran #izmir #dijitaltadilat"),
 }
 
 if __name__ == "__main__":

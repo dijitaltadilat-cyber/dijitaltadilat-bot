@@ -9,6 +9,9 @@ import subprocess
 
 from PIL import Image, ImageDraw, ImageFont
 
+import fx3d
+from fx3d import cube, gradient_bg, floor_grid, raised_box, text3d, text3d_block
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 F_HEAD = os.path.join(ROOT, "fonts", "Baloo2-ExtraBold.ttf")
 F_BOLD = os.path.join(ROOT, "fonts", "Nunito-Bold.ttf")
@@ -87,11 +90,17 @@ def text_block(d, x, y, lines, fnt, lh, fill, center_w=None):
     return y
 
 
+def paste3d(img, im, x, y, depth=8, side=None):
+    """Şeffaf görseli 3B kabartma olarak yapıştırır."""
+    ex, pad = fx3d.extrude(im, depth=depth, side_color=side)
+    img.paste(ex, (x - pad, y - pad), ex)
+
+
 def lockup(img, x, y, h=78, color=None):
     """Yatay logo: işaret + yazı."""
     mark = asset("logo_mark.png", max_h=h, color=color)
     word = asset("logo_word.png", max_h=int(h * 0.82), color=color)
-    img.paste(mark, (x, y), mark)
+    paste3d(img, mark, x, y, depth=max(5, h // 9))
     img.paste(word, (x + mark.size[0] + 18, y + (h - word.size[1]) // 2), word)
     return mark.size[0] + 18 + word.size[0]
 
@@ -105,11 +114,15 @@ def chat_icon(d, x, y, s, fill, hole):
         d.ellipse([cx - r, y + s / 2 - r, cx + r, y + s / 2 + r], fill=hole)
 
 
-def wa_pill(d, x, y, bg, fg, size=36, h=78):
+def wa_pill(d, x, y, bg, fg, size=36, h=78, img=None):
     f = font(F_BOLD, size)
     tw = d.textlength(WA_LINE, font=f)
     w = int(tw + h + 40)
-    d.rounded_rectangle([x, y, x + w, y + h], radius=h // 2, fill=bg)
+    if img is not None:
+        raised_box(img, [x, y, x + w, y + h], h // 2, bg, depth=10)
+        d = ImageDraw.Draw(img)
+    else:
+        d.rounded_rectangle([x, y, x + w, y + h], radius=h // 2, fill=bg)
     ic = int(h * 0.5)
     chat_icon(d, x + 24, y + (h - ic) // 2 - 2, ic, fg, bg)
     d.text((x + 24 + ic + 16, y + (h - size) // 2 - size * 0.18), WA_LINE, fill=fg, font=f)
@@ -144,8 +157,20 @@ def _body(d, post, size=40, lines=3, maxw=MAXW):
     return f, ls, int(s * 1.38)
 
 
+SIDE_W = (120, 104, 190)    # beyaz yazının yan yüzü (mor-lila)
+SIDE_N = (118, 150, 20)     # lacivert yazının lime zemindeki yan yüzü
+SIDE_L = (70, 96, 10)       # lime yazının yan yüzü
+
+
+def _cubes(img, spots, top=LIME):
+    for cx, cy, s in spots:
+        cube(img, cx, cy, s, top)
+
+
 def v_classic(post):
-    img = Image.new("RGB", (W, W), NAVY)
+    img = gradient_bg((W, W), NAVY, light_xy=(0.2, 0.1), strength=2.6)
+    floor_grid(img, LIME, horizon=0.66, alpha=40)
+    _cubes(img, [(905, 150, 54), (990, 300, 30), (830, 330, 20)])
     d = ImageDraw.Draw(img)
     lockup(img, X, 80)
     chip(d, X, 222, post["label"], LIME)
@@ -153,14 +178,16 @@ def v_classic(post):
     bf, bl, blh = _body(d, post)
     block = len(hl) * hlh + 30 + len(bl) * blh
     y = 300 + max(0, (590 - block) // 2)
-    y = text_block(d, X, y, hl, hf, hlh, WHITE) + 30
-    text_block(d, X, y, bl, bf, blh, MUTED)
-    wa_pill(d, X, 930, LIME, NAVY)
+    y = text3d_block(img, X, y, hl, hf, hlh, WHITE, SIDE_W, depth=9) + 30
+    text_block(ImageDraw.Draw(img), X, y, bl, bf, blh, MUTED)
+    wa_pill(d, X, 920, LIME, NAVY, img=img)
     return img
 
 
 def v_lime(post):
-    img = Image.new("RGB", (W, W), LIME)
+    img = gradient_bg((W, W), LIME, light_xy=(0.15, 0.1), strength=1.25, falloff=0.9)
+    floor_grid(img, NAVY, horizon=0.68, alpha=30)
+    _cubes(img, [(915, 160, 50), (1000, 300, 28)], top=NAVY2)
     d = ImageDraw.Draw(img)
     lockup(img, X, 80, color=NAVY)
     chip(d, X, 222, post["label"], NAVY)
@@ -168,64 +195,80 @@ def v_lime(post):
     bf, bl, blh = _body(d, post)
     block = len(hl) * hlh + 30 + len(bl) * blh
     y = 300 + max(0, (590 - block) // 2)
-    y = text_block(d, X, y, hl, hf, hlh, NAVY) + 30
-    text_block(d, X, y, bl, bf, blh, NAVY2)
-    wa_pill(d, X, 930, NAVY, LIME)
+    y = text3d_block(img, X, y, hl, hf, hlh, NAVY, SIDE_N, depth=9) + 30
+    text_block(ImageDraw.Draw(img), X, y, bl, bf, blh, NAVY2)
+    wa_pill(d, X, 920, NAVY, LIME, img=img)
     return img
 
 
 def v_watermark(post):
-    img = Image.new("RGB", (W, W), NAVY)
-    big = asset("logo_mark.png", max_h=760, opacity=0.13)
-    img.paste(big, (W - big.size[0] + 120, W - big.size[1] + 60), big)
+    img = gradient_bg((W, W), NAVY, light_xy=(0.85, 0.85), strength=2.8)
+    big = asset("logo_mark.png", max_h=640, color=(120, 100, 210))
+    ex, pad = fx3d.extrude(big, depth=36, side_color=(70, 55, 140), shadow=False)
+    ex.putalpha(ex.split()[3].point(lambda p: int(p * 0.30)))
+    img.paste(ex, (W - big.size[0] + 60 - pad, W - big.size[1] + 10 - pad), ex)
     d = ImageDraw.Draw(img)
     mark = asset("logo_mark.png", max_h=70)
-    img.paste(mark, (X, 80), mark)
+    paste3d(img, mark, X, 80, depth=7)
     d.text((X + mark.size[0] + 20, 92), post["label"], fill=LIME, font=font(F_BOLD, 30))
     hf, hl, hlh = _headline(d, post, size=96, maxw=860)
     bf, bl, blh = _body(d, post, maxw=800)
     block = len(hl) * hlh + 34 + len(bl) * blh
     y = 220 + max(0, (660 - block) // 2)
-    y = text_block(d, X, y, hl, hf, hlh, LIME) + 34
-    text_block(d, X, y, bl, bf, blh, WHITE)
-    wa_pill(d, X, 930, WHITE, NAVY)
+    y = text3d_block(img, X, y, hl, hf, hlh, LIME, SIDE_L, depth=10) + 34
+    text_block(ImageDraw.Draw(img), X, y, bl, bf, blh, WHITE)
+    wa_pill(d, X, 920, WHITE, NAVY, img=img)
     return img
 
 
 def v_card(post):
-    img = Image.new("RGB", (W, W), NAVY)
+    img = gradient_bg((W, W), NAVY, light_xy=(0.5, 0.0), strength=2.6)
+    _cubes(img, [(985, 95, 34), (40, 905, 26)])
     d = ImageDraw.Draw(img)
-    lockup(img, X, 64, h=64)
-    d.rounded_rectangle([60, 180, W - 60, 890], radius=44, fill=WHITE)
-    chip(d, 110, 230, post["label"], NAVY, filled=True, text_color=LIME)
+    lockup(img, X, 54, h=64)
+    raised_box(img, [60, 165, W - 60, 865], 44, WHITE, depth=18)
+    d = ImageDraw.Draw(img)
+    chip(d, 110, 215, post["label"], NAVY, filled=True, text_color=LIME)
     hf, hl, hlh = _headline(d, post, size=84, maxw=820)
     bf, bl, blh = _body(d, post, size=38, maxw=820)
     block = len(hl) * hlh + 28 + len(bl) * blh
-    y = 310 + max(0, (540 - block) // 2)
-    y = text_block(d, 110, y, hl, hf, hlh, NAVY) + 28
+    y = 295 + max(0, (540 - block) // 2)
+    y = text3d_block(img, 110, y, hl, hf, hlh, NAVY, (150, 145, 190), depth=6) + 28
+    d = ImageDraw.Draw(img)
     text_block(d, 110, y, bl, bf, blh, NAVY2)
-    wa_pill(d, X, 930, LIME, NAVY, size=34, h=72)
-    d.text((W - X - d.textlength(WEB, font=font(F_SEMI, 30)), 950), WEB,
+    wa_pill(d, X, 925, LIME, NAVY, size=34, h=72, img=img)
+    d = ImageDraw.Draw(img)
+    d.text((W - X - d.textlength(WEB, font=font(F_SEMI, 30)), 945), WEB,
            fill=MUTED, font=font(F_SEMI, 30))
     return img
 
 
 def v_split(post):
-    img = Image.new("RGB", (W, W), NAVY)
+    img = gradient_bg((W, W), NAVY, light_xy=(0.5, 1.0), strength=2.4)
+    top = gradient_bg((W, 620), LIME, light_xy=(0.2, 0.0), strength=1.25, falloff=1.0)
+    # lime blok, altında kalınlık ve gölge
+    fx3d.soft_shadow(img, [0, 0, W, 620], 0, offset=(0, 30), blur=30, opacity=170)
+    ImageDraw.Draw(img).rectangle([0, 600, W, 640], fill=shade_l(LIME, 0.6))
+    img.paste(top, (0, 0))
+    _cubes(img, [(940, 150, 46), (1020, 280, 24)], top=NAVY2)
     d = ImageDraw.Draw(img)
-    d.rectangle([0, 0, W, 620], fill=LIME)
     mark = asset("logo_mark.png", max_h=64, color=NAVY)
-    img.paste(mark, (X, 70), mark)
+    paste3d(img, mark, X, 70, depth=6, side=(60, 80, 10))
     d.text((X + mark.size[0] + 18, 80), post["label"], fill=NAVY, font=font(F_BOLD, 30))
     hf, hl, hlh = _headline(d, post, size=96, lines=4)
     y = 170 + max(0, (420 - len(hl) * hlh) // 2)
-    text_block(d, X, y, hl, hf, hlh, NAVY)
+    text3d_block(img, X, y, hl, hf, hlh, NAVY, SIDE_N, depth=9)
+    d = ImageDraw.Draw(img)
     bf, bl, blh = _body(d, post, size=40, lines=2)
-    text_block(d, X, 680, bl, bf, blh, WHITE)
-    wa_pill(d, X, 900, LIME, NAVY)
+    text_block(d, X, 690, bl, bf, blh, WHITE)
+    wa_pill(d, X, 895, LIME, NAVY, img=img)
     word = asset("logo_word.png", max_h=70)
-    img.paste(word, (W - X - word.size[0], 904), word)
+    img.paste(word, (W - X - word.size[0], 899), word)
     return img
+
+
+def shade_l(c, k):
+    return fx3d.shade(c, k)
 
 
 VARIANTS = [v_classic, v_lime, v_watermark, v_card, v_split]
@@ -257,15 +300,17 @@ def _check(d, x, y, s, color):
 
 
 def packages_cover():
-    img = Image.new("RGB", (W, W), NAVY)
+    img = gradient_bg((W, W), NAVY, light_xy=(0.5, 0.3), strength=2.6)
+    floor_grid(img, LIME, horizon=0.6, alpha=35)
     d = ImageDraw.Draw(img)
-    big = asset("logo_mark.png", max_h=520)
-    img.paste(big, ((W - big.size[0]) // 2, 90), big)
+    big = asset("logo_mark.png", max_h=480)
+    paste3d(img, big, (W - big.size[0]) // 2 - 10, 90, depth=30)
     f = font(F_HEAD, 120)
     t = "Paketler & Fiyatlar"
     lines = wrap(d, t, f, 940)
     y = 640
-    y = text_block(d, 70, y, lines, f, 118, WHITE, center_w=940)
+    y = text3d_block(img, 70, y, lines, f, 118, WHITE, SIDE_W, depth=10, center_w=940)
+    d = ImageDraw.Draw(img)
     s = "Kaydır, dükkânına uygun paketi seç"
     sf = font(F_SEMI, 38)
     d.text(((W - d.textlength(s, font=sf)) / 2, 930), s, fill=LIME, font=sf)
@@ -275,14 +320,16 @@ def packages_cover():
 def package_slide(p):
     hl = p["tag"] is not None
     bg, fg, sub, acc = (LIME, NAVY, NAVY2, NAVY) if hl else (NAVY, WHITE, MUTED, LIME)
-    img = Image.new("RGB", (W, W), bg)
+    img = gradient_bg((W, W), bg, light_xy=(0.2, 0.1), strength=1.25 if hl else 2.6)
+    _cubes(img, [(930, 170, 50), (1010, 310, 26)], top=NAVY2 if hl else LIME)
     d = ImageDraw.Draw(img)
     lockup(img, X, 70, h=60, color=NAVY if hl else None)
     if p["tag"]:
         chip(d, X, 170, p["tag"], NAVY, filled=True, text_color=LIME)
     d.text((X, 240), p["name"], fill=acc, font=font(F_BOLD, 46))
     pf = font(F_HEAD, 170)
-    d.text((X, 280), p["price"], fill=fg, font=pf)
+    text3d(img, (X, 280), p["price"], pf, fg, SIDE_N if hl else SIDE_W, depth=14)
+    d = ImageDraw.Draw(img)
     pw = d.textlength(p["price"], font=pf)
     d.text((X + pw + 16, 360), "₺ / ay", fill=sub, font=font(F_BOLD, 52))
     y = 520
@@ -291,7 +338,7 @@ def package_slide(p):
         _check(d, X, y + 12, 34, acc)
         d.text((X + 60, y), it, fill=fg, font=itf)
         y += 70
-    wa_pill(d, X, 930, NAVY if hl else LIME, LIME if hl else NAVY, size=34, h=72)
+    wa_pill(d, X, 920, NAVY if hl else LIME, LIME if hl else NAVY, size=34, h=72, img=img)
     return img
 
 
@@ -306,16 +353,18 @@ def make_packages(out_prefix):
 
 
 def campaign_image():
-    img = Image.new("RGB", (W, W), LIME)
+    img = gradient_bg((W, W), LIME, light_xy=(0.2, 0.1), strength=1.25, falloff=0.9)
+    _cubes(img, [(900, 470, 70), (1000, 640, 34)], top=NAVY2)
     d = ImageDraw.Draw(img)
     lockup(img, X, 80, color=NAVY)
     chip(d, X, 210, "AÇILIŞA ÖZEL", NAVY, filled=True, text_color=LIME)
-    d.text((X, 270), "İlk 5 esnafa", fill=NAVY, font=font(F_HEAD, 96))
-    d.text((X - 6, 340), "%50", fill=NAVY, font=font(F_HEAD, 300))
-    d.text((X, 660), "ilk ay indirim", fill=NAVY, font=font(F_HEAD, 96))
+    text3d(img, (X, 270), "İlk 5 esnafa", font(F_HEAD, 96), NAVY, SIDE_N, depth=8)
+    text3d(img, (X - 6, 340), "%50", font(F_HEAD, 300), NAVY, SIDE_N, depth=22)
+    text3d(img, (X, 660), "ilk ay indirim", font(F_HEAD, 96), NAVY, SIDE_N, depth=8)
+    d = ImageDraw.Draw(img)
     sf = font(F_SEMI, 38)
     d.text((X, 790), "Taahhüt yok · Ücretsiz ilk görüşme", fill=NAVY2, font=sf)
-    wa_pill(d, X, 900, NAVY, LIME)
+    wa_pill(d, X, 900, NAVY, LIME, img=img)
     return img
 
 

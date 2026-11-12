@@ -526,12 +526,16 @@ def _layout(slides):
     return blocks, total, gh, g
 
 
-def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
-    # Zamanlama müziğin vuruşlarına göre: her yazı 3 vuruşta bir gelir
+def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None, music=None):
+    # Zamanlama müziğin vuruşlarına göre: her yazı 3 vuruşta bir gelir.
+    # music = music.settings(n): her Reels'te farklı tarz / tempo / ton.
     import tempfile
     import zlib
 
-    from music import BEAT, make_track
+    from music import make_track
+    if music is None:
+        music = {"seed": zlib.crc32(" ".join(reel["slides"]).encode()) % 1000, "bpm": 112, "style": None}
+    BEAT = 60 / music["bpm"]
     slide_dur = slide_dur or 3 * BEAT
     hold = hold or 2 * BEAT
     end_dur = end_dur or 6 * BEAT
@@ -544,9 +548,9 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
     total = text_dur + end_dur
     n = int(total * FPS)
 
-    seed = zlib.crc32(" ".join(slides).encode()) % 1000
+    seed = music["seed"]
     wav = os.path.join(tempfile.mkdtemp(), "m.wav")
-    make_track(total + 0.2, seed, wav)
+    make_track(total + 0.2, seed, wav, bpm=music["bpm"], style=music.get("style"))
 
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{RW}x{RH}", "-r", str(FPS), "-i", "-",

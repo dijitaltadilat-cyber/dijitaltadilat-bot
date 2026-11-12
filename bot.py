@@ -386,19 +386,24 @@ def main():
             media_id = post_image(push_media([rel])[0], caption)
     else:
         path = os.path.join(MEDIA_DIR, f"{stamp}-reel{idx}.mp4")
-        make_reel(item, path)
-        print(f"🎬 Video üretildi: {os.path.relpath(path, ROOT)}")
+        from music import settings as music_settings
+        music = music_settings(state["reel"])  # her Reels'te yeni müzik
+        make_reel(item, path, music=music)
+        print(f"🎬 Video üretildi: {os.path.relpath(path, ROOT)} "
+              f"(müzik: {music['style']}, {music['bpm']} BPM)")
         if args.dry_run:
             return
         media_id = post_reel(path, caption)
         os.remove(path)  # videolar repoya eklenmez
 
+    music = locals().get("music")
     state[key] += 1
     if slot_key:
         state["slots_done"] = (state.get("slots_done", []) + [slot_key])[-120:]
     state["history"] = (state.get("history", []) + [{
         "time": now.isoformat(timespec="minutes"), "kind": args.kind,
         "index": idx, "district": district["name"], "media_id": media_id,
+        **({"music": f"{music['style']} {music['bpm']}"} if music else {}),
     }])[-60:]
     save_json(STATE_PATH, state)
     git("add", "state.json")

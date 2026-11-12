@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 import fx3d
+import illus
 from fx3d import cube, gradient_bg, floor_grid, raised_box, text3d, text3d_block
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -365,14 +366,19 @@ def shade_l(c, k):
 VARIANTS = [v_classic, v_lime, v_watermark, v_card, v_split]
 
 
-def v_phone(post, lime=False):
-    """Telefon/WhatsApp/mesaj konulu paylaşımlar: solda yazı, sağda 3B telefon."""
+def v_art(post, kind, lime=False):
+    """Konulu paylaşımlar: solda yazı, sağda konuya uygun 3B çizim."""
     bg, fg, sub, side = (LIME, NAVY, NAVY2, SIDE_N) if lime else (NAVY, WHITE, MUTED, SIDE_W)
     img = gradient_bg((W, W), bg, light_xy=(0.8, 0.35), strength=1.25 if lime else 2.6, falloff=0.85)
     floor_grid(img, NAVY if lime else LIME, horizon=0.7, alpha=30 if lime else 40)
-    ph = phone3d(330, angle=-10)
-    bx0, by0, bx1, by1 = ph.getchannel("A").point(lambda p: 255 if p > 200 else 0).getbbox()
-    img.paste(ph, (1045 - bx1, 885 - by1), ph)
+    ph, (bx0, by0, bx1, by1) = illus.art3d(kind)
+    # sağ sütuna (x 610-1055, y 140-890) sığdır, sağa yasla, dikeyde ortala
+    k = min(1.0, 420 / (bx1 - bx0), 740 / (by1 - by0))
+    if k < 1:
+        ph = ph.resize((int(ph.size[0] * k), int(ph.size[1] * k)), Image.LANCZOS)
+        bx0, by0, bx1, by1 = [int(v * k) for v in (bx0, by0, bx1, by1)]
+    bh = by1 - by0
+    img.paste(ph, (int(1055 - bx1), int(515 - bh / 2 - by0)), ph)
     _cubes(img, [(640, 150, 30), (1000, 960, 24)], top=NAVY2 if lime else LIME)
     d = ImageDraw.Draw(img)
     lockup(img, X, 80, color=NAVY if lime else None)
@@ -388,8 +394,9 @@ def v_phone(post, lime=False):
 
 
 def make_image(post, out_path, variant=0):
-    if is_phone_topic(post.get("headline"), post.get("body")):
-        img = v_phone(post, lime=variant % 2 == 1)
+    kind = illus.topic_of(post.get("headline"), post.get("body"))
+    if kind:
+        img = v_art(post, kind, lime=variant % 2 == 1)
     else:
         img = VARIANTS[variant % len(VARIANTS)](post)
     img.save(out_path, "JPEG", quality=94)
@@ -585,8 +592,8 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
     # kapanış: 3B logo + 3B telefon + yükselen buton
     lg = asset("logo.png", max_h=380)
     end_logo, lpad = fx3d.extrude(lg, depth=16)
-    end_phone = phone3d(330, angle=-9)
-    pbx = end_phone.getchannel("A").point(lambda p: 255 if p > 200 else 0).getbbox()
+    end_kind = illus.topic_of(*slides) or ["shop", "phone", "laptop", "stars", "pin", "camera"][seed % 6]
+    end_phone, pbx = illus.art3d(end_kind, scale=0.85)
     cta_card = Image.new("RGBA", (620, 520), (0, 0, 0, 0))
     cd = ImageDraw.Draw(cta_card)
     cf = font(F_HEAD, 54)
@@ -648,7 +655,9 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
             pt = ease((et - 0.3) / 0.7)
             if pt > 0:
                 ep = fade(end_phone, pt)
-                img.paste(ep, (1050 - pbx[2], 1640 - pbx[3] + int((1 - pt) * 220)), ep)
+                pcx = 1050 - (pbx[2] - pbx[0]) / 2 if pbx[2] - pbx[0] < 420 else RW - 30 - (pbx[2] - pbx[0]) / 2
+                pcy = 1300
+                img.paste(ep, (int(pcx - (pbx[2] + pbx[0]) / 2), int(pcy - (pbx[3] + pbx[1]) / 2 + (1 - pt) * 220)), ep)
             ct = ease((et - 0.6) / 0.5)
             if ct > 0:
                 cc = fade(cta_card, ct)

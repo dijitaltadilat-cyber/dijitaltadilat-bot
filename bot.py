@@ -379,8 +379,9 @@ def main():
             if ptype == "campaign":
                 make_campaign(os.path.join(ROOT, rel))
             else:
-                make_image(item, os.path.join(ROOT, rel), variant=state["post"] % 5)
-            print(f"🖼️  Görsel üretildi: {rel} (tasarım {state['post'] % 5})")
+                from premium import make_premium  # gerçekçi 4:5 tasarım
+                make_premium(item, os.path.join(ROOT, rel), idx=state["post"])
+            print(f"🖼️  Görsel üretildi: {rel} (premium tasarım)")
             if args.dry_run:
                 return
             media_id = post_image(push_media([rel])[0], caption)

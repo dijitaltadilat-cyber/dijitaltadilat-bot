@@ -7,6 +7,7 @@ Reels    : 1080x1920 MP4, hareketli yazılar, logolu kapanış
 import os
 import subprocess
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 import fx3d
@@ -137,6 +138,96 @@ def chip(d, x, y, label, color, filled=False, text_color=None):
     else:
         d.rounded_rectangle([x, y, x + w + 44, y + 52], radius=26, outline=color, width=3)
     d.text((x + 22, y + 9), label, fill=text_color or color, font=f)
+
+
+# --------------------------------------------------------------------------
+# 3B telefon (WhatsApp / telefon / mesaj geçen paylaşımlarda)
+# --------------------------------------------------------------------------
+import re as _re
+
+PHONE_RE = _re.compile(r"whatsapp|telefon|mesaj|\bdm|ara(yabil|r|y)", _re.I)
+CHATS = [
+    ("in", "Merhaba, bugün açık mısınız?"),
+    ("out", "Açığız! Sizi bekliyoruz"),
+    ("in", "Sipariş verebilir miyim?"),
+    ("out", "Tabii, hemen hazırlıyoruz"),
+]
+
+
+def is_phone_topic(*texts):
+    return bool(PHONE_RE.search(" ".join(t or "" for t in texts)))
+
+
+def phone_flat(w=420, chats=CHATS):
+    """Önden telefon: çerçeve + sohbet ekranı (RGBA)."""
+    h = int(w * 2.05)
+    s = w / 420
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([0, 0, w - 1, h - 1], radius=int(64 * s), fill=(12, 9, 28, 255))
+    d.rounded_rectangle([4, 4, w - 5, h - 5], radius=int(60 * s), outline=(90, 80, 140, 255), width=max(2, int(3 * s)))
+    m = int(16 * s)
+    sx0, sy0, sx1, sy1 = m, m, w - m, h - m
+    d.rounded_rectangle([sx0, sy0, sx1, sy1], radius=int(50 * s), fill=(236, 233, 248, 255))
+    # üst bar
+    bar = int(150 * s)
+    d.rounded_rectangle([sx0, sy0, sx1, sy0 + bar], radius=int(50 * s), fill=NAVY + (255,))
+    d.rectangle([sx0, sy0 + bar - int(50 * s), sx1, sy0 + bar], fill=NAVY + (255,))
+    d.rounded_rectangle([w / 2 - 50 * s, sy0 + 14 * s, w / 2 + 50 * s, sy0 + 40 * s], radius=int(13 * s), fill=(0, 0, 0, 255))
+    av = int(62 * s)
+    ax, ay = sx0 + int(22 * s), sy0 + int(66 * s)
+    d.ellipse([ax, ay, ax + av, ay + av], fill=LIME + (255,))
+    mk = asset("logo_mark.png", max_h=int(av * 0.62), color=NAVY)
+    im.paste(mk, (ax + (av - mk.size[0]) // 2, ay + (av - mk.size[1]) // 2), mk)
+    d.text((ax + av + 16 * s, ay + 4 * s), "Dijital Tadilat", fill=WHITE, font=font(F_BOLD, int(28 * s)))
+    d.text((ax + av + 16 * s, ay + 38 * s), "çevrimiçi", fill=LIME, font=font(F_SEMI, int(20 * s)))
+    # mesajlar
+    bf = font(F_SEMI, int(25 * s))
+    y = sy0 + bar + int(30 * s)
+    maxw = int((sx1 - sx0) * 0.74)
+    for side, txt in chats:
+        lines = wrap(d, txt, bf, maxw - int(36 * s))
+        tw = max(d.textlength(l, font=bf) for l in lines)
+        bw, bh = int(tw + 36 * s), int(len(lines) * 34 * s + 26 * s)
+        if side == "in":
+            x0, fill, fg = sx0 + int(20 * s), (255, 255, 255, 255), NAVY
+        else:
+            x0, fill, fg = sx1 - int(20 * s) - bw, LIME + (255,), NAVY
+        d.rounded_rectangle([x0, y, x0 + bw, y + bh], radius=int(22 * s), fill=fill)
+        ty = y + int(12 * s)
+        for l in lines:
+            d.text((x0 + 18 * s, ty), l, fill=fg, font=bf)
+            ty += int(34 * s)
+        y += bh + int(18 * s)
+    # alt yazma kutusu
+    iy = sy1 - int(90 * s)
+    d.rounded_rectangle([sx0 + 18 * s, iy, sx1 - 100 * s, iy + 66 * s], radius=int(33 * s), fill=(255, 255, 255, 255))
+    d.text((sx0 + 44 * s, iy + 17 * s), "Mesaj yaz...", fill=MUTED, font=bf)
+    d.ellipse([sx1 - 86 * s, iy, sx1 - 20 * s, iy + 66 * s], fill=LIME + (255,))
+    cx, cy = sx1 - 53 * s, iy + 33 * s
+    d.polygon([(cx - 13 * s, cy - 14 * s), (cx + 16 * s, cy), (cx - 13 * s, cy + 14 * s), (cx - 7 * s, cy)], fill=NAVY + (255,))
+    # ekran parlaması
+    gl = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(gl).polygon([(w * 0.55, 0), (w, 0), (w, h * 0.35), (w * 0.15, h)], fill=26)
+    wh = Image.new("RGBA", (w, h), (255, 255, 255, 255))
+    gl = Image.fromarray(np.minimum(np.array(gl), np.array(im.split()[3])))
+    wh.putalpha(gl)
+    im.alpha_composite(wh)
+    return im
+
+
+_phone_cache = {}
+
+
+def phone3d(w=420, angle=-9, depth=22):
+    """Kalınlığı olan, hafif eğik, gölgeli telefon (RGBA) ve gölge payı."""
+    k = (w, angle, depth)
+    if k not in _phone_cache:
+        flat = phone_flat(w)
+        ex, pad = fx3d.extrude(flat, depth=depth, side_color=(70, 60, 120), direction=(1, 1))
+        ex = ex.rotate(angle, resample=Image.BICUBIC, expand=True)
+        _phone_cache[k] = ex
+    return _phone_cache[k].copy()
 
 
 # --------------------------------------------------------------------------
@@ -274,8 +365,33 @@ def shade_l(c, k):
 VARIANTS = [v_classic, v_lime, v_watermark, v_card, v_split]
 
 
+def v_phone(post, lime=False):
+    """Telefon/WhatsApp/mesaj konulu paylaşımlar: solda yazı, sağda 3B telefon."""
+    bg, fg, sub, side = (LIME, NAVY, NAVY2, SIDE_N) if lime else (NAVY, WHITE, MUTED, SIDE_W)
+    img = gradient_bg((W, W), bg, light_xy=(0.8, 0.35), strength=1.25 if lime else 2.6, falloff=0.85)
+    floor_grid(img, NAVY if lime else LIME, horizon=0.7, alpha=30 if lime else 40)
+    ph = phone3d(330, angle=-10)
+    bx0, by0, bx1, by1 = ph.getchannel("A").point(lambda p: 255 if p > 200 else 0).getbbox()
+    img.paste(ph, (1045 - bx1, 885 - by1), ph)
+    _cubes(img, [(640, 150, 30), (1000, 960, 24)], top=NAVY2 if lime else LIME)
+    d = ImageDraw.Draw(img)
+    lockup(img, X, 80, color=NAVY if lime else None)
+    chip(d, X, 222, post["label"], NAVY if lime else LIME)
+    hf, hl, hlh = _headline(d, post, size=74, lines=5, maxw=500)
+    bf, bl, blh = _body(d, post, size=34, lines=4, maxw=470)
+    block = len(hl) * hlh + 28 + len(bl) * blh
+    y = 300 + max(0, (590 - block) // 2)
+    y = text3d_block(img, X, y, hl, hf, hlh, fg, side, depth=8) + 28
+    text_block(ImageDraw.Draw(img), X, y, bl, bf, blh, sub)
+    wa_pill(d, X, 920, NAVY if lime else LIME, LIME if lime else NAVY, img=img)
+    return img
+
+
 def make_image(post, out_path, variant=0):
-    img = VARIANTS[variant % len(VARIANTS)](post)
+    if is_phone_topic(post.get("headline"), post.get("body")):
+        img = v_phone(post, lime=variant % 2 == 1)
+    else:
+        img = VARIANTS[variant % len(VARIANTS)](post)
     img.save(out_path, "JPEG", quality=94)
     return out_path
 
@@ -432,16 +548,65 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
            "-profile:v", "high", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", out_path]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 
-    bg_mark = asset("logo_mark.png", max_h=900, opacity=0.07)
-    head_lock = Image.new("RGBA", (700, 80), (0, 0, 0, 0))
-    lockup(head_lock, 0, 0, h=72)
-    full_logo = asset("logo.png", max_h=560)
+    # --- 3B sahne parçaları bir kez hazırlanır, karelerde sadece yapıştırılır ---
+    base = gradient_bg((RW, RH), NAVY, light_xy=(0.3, 0.25), strength=2.6, falloff=0.8)
+    floor_grid(base, LIME, horizon=0.72, alpha=38)
+    bm = asset("logo_mark.png", max_h=820, color=(120, 100, 210))
+    bg_mark, _ = fx3d.extrude(bm, depth=40, side_color=(70, 55, 140), shadow=False)
+    bg_mark.putalpha(bg_mark.split()[3].point(lambda p: int(p * 0.22)))
+
+    def cube_sprite(sz, top):
+        c = Image.new("RGBA", (int(sz * 2.6), int(sz * 3.2)), (0, 0, 0, 0))
+        cube(c, c.size[0] / 2, sz * 0.8, sz, top)
+        return c
+    cubes = [(cube_sprite(70, LIME), 860, 330, 0.0), (cube_sprite(36, LIME), 990, 560, 1.3),
+             (cube_sprite(28, LIME), 120, 1560, 2.1), (cube_sprite(46, NAVY2), 930, 1640, 0.7)]
+
+    head_lock = Image.new("RGBA", (760, 140), (0, 0, 0, 0))
+    lockup(head_lock, 30, 20, h=72)
+
+    def line_sprite(text, f, col):
+        tw = int(ImageDraw.Draw(Image.new("L", (1, 1))).textlength(text, font=f))
+        sz = f.size
+        dep = max(6, sz // 10)
+        side = SIDE_L if col == LIME else SIDE_W
+        sp = Image.new("RGBA", (tw + 120, int(sz * 1.6) + 80), (0, 0, 0, 0))
+        text3d(sp, (20, 10), text, f, col, side, depth=dep)
+        return sp
+    sprites = [[line_sprite(ln, f, col) for ln in ls] for f, ls, lh, col in blocks]
+
+    def fade(im, a):
+        if a >= 1:
+            return im
+        im = im.copy()
+        im.putalpha(im.split()[3].point(lambda p: int(p * a)))
+        return im
+
+    # kapanış: 3B logo + 3B telefon + yükselen buton
+    lg = asset("logo.png", max_h=380)
+    end_logo, lpad = fx3d.extrude(lg, depth=16)
+    end_phone = phone3d(330, angle=-9)
+    pbx = end_phone.getchannel("A").point(lambda p: 255 if p > 200 else 0).getbbox()
+    cta_card = Image.new("RGBA", (620, 520), (0, 0, 0, 0))
+    cd = ImageDraw.Draw(cta_card)
+    cf = font(F_HEAD, 54)
+    cta = "WhatsApp'tan yaz"
+    cw = int(cd.textlength(cta, font=cf))
+    raised_box(cta_card, [10, 20, 10 + cw + 80, 120], 50, LIME, depth=12)
+    cd = ImageDraw.Draw(cta_card)
+    cd.text((50, 34), cta, fill=NAVY, font=cf)
+    text3d(cta_card, (10, 175), PHONE, font(F_HEAD, 70), WHITE, SIDE_W, depth=7)
+    cd = ImageDraw.Draw(cta_card)
+    cd.text((12, 300), WEB, fill=MUTED, font=font(F_BOLD, 42))
+    import math
 
     for i in range(n):
         t = i / FPS
-        img = Image.new("RGB", (RW, RH), NAVY)
-        # yavaşça kayan dev işaret (arka plan hareketi)
-        img.paste(bg_mark, (int(RW - bg_mark.size[0] + 260 - t * 18), int(RH - bg_mark.size[1] - 120 + t * 10)), bg_mark)
+        img = base.copy()
+        img.paste(bg_mark, (int(RW - bg_mark.size[0] + 300 - t * 18), int(RH - bg_mark.size[1] - 60 + t * 10)), bg_mark)
+        for sp, cx, cy, ph in cubes:
+            bob = math.sin(t * 1.6 + ph) * 14
+            img.paste(sp, (int(cx - sp.size[0] / 2), int(cy - sp.size[1] / 3 + bob)), sp)
         d = ImageDraw.Draw(img)
         d.rectangle([0, 0, int(RW * t / total), 12], fill=LIME)
 
@@ -449,9 +614,8 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
             fo = 1 - ease((t - (text_dur - 0.4)) / 0.4) if t > text_dur - 0.4 else 1.0
             ha = ease(t / 0.5) * fo
             if ha > 0:
-                hl = head_lock.copy()
-                hl.putalpha(hl.split()[3].point(lambda p: int(p * ha)))
-                img.paste(hl, (80, 210), hl)
+                hl_ = fade(head_lock, ha)
+                img.paste(hl_, (50, 190), hl_)
             y = sy
             for bi, (f, ls, lh, col) in enumerate(blocks):
                 ap = lead + bi * slide_dur - 0.08
@@ -459,7 +623,8 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
                     lt = (t - ap - li * 0.08) / 0.45
                     a = ease(lt) * fo
                     if a > 0:
-                        d.text((80, y + int((1 - ease(lt)) * 56)), ln, fill=mix(col, a), font=f)
+                        sp = fade(sprites[bi][li], a)
+                        img.paste(sp, (60, y - 10 + int((1 - ease(lt)) * 56)), sp)
                     y += lh
                 if bi == 0:
                     bt = ease((t - ap - 0.3) / 0.5)
@@ -471,27 +636,23 @@ def make_reel(reel, out_path, slide_dur=None, hold=None, end_dur=None):
         else:
             et = t - text_dur
             a = ease(et / 0.5)
-            s = 0.8 + 0.2 * ease(et / 0.7)
-            lg = full_logo.resize((int(full_logo.size[0] * s), int(full_logo.size[1] * s)), Image.LANCZOS)
-            if a < 1:
-                lg.putalpha(lg.split()[3].point(lambda p: int(p * a)))
-            img.paste(lg, ((RW - lg.size[0]) // 2, 470 - (lg.size[1] - 560) // 2), lg)
+            s = 0.85 + 0.15 * ease(et / 0.7)
+            el = end_logo.resize((int(end_logo.size[0] * s), int(end_logo.size[1] * s)), Image.LANCZOS)
+            el = fade(el, a)
+            img.paste(el, ((RW - el.size[0]) // 2, 300 - int(lpad * s) - (el.size[1] - end_logo.size[1]) // 2), el)
             tf = font(F_SEMI, 44)
             line = "Sosyal medya ajansı & yazılım"
-            d.text(((RW - d.textlength(line, font=tf)) / 2, 1080), line, fill=mix(MUTED, a), font=tf)
-            pt = ease((et - 0.5) / 0.5)
+            d = ImageDraw.Draw(img)
+            d.text(((RW - d.textlength(line, font=tf)) / 2, 760), line, fill=mix(MUTED, a), font=tf)
+            # telefon sağdan yükselir
+            pt = ease((et - 0.3) / 0.7)
             if pt > 0:
-                py = 1170 + int((1 - pt) * 40)
-                cf = font(F_HEAD, 64)
-                cta = "WhatsApp'tan yaz"
-                cw = d.textlength(cta, font=cf)
-                px = (RW - cw - 100) / 2
-                d.rounded_rectangle([px, py, px + cw + 100, py + 120], radius=60, fill=mix(LIME, pt))
-                d.text((px + 50, py + 18), cta, fill=NAVY, font=cf)
-                nf = font(F_HEAD, 84)
-                d.text(((RW - d.textlength(PHONE, font=nf)) / 2, py + 160), PHONE, fill=mix(WHITE, pt), font=nf)
-                wf = font(F_BOLD, 46)
-                d.text(((RW - d.textlength(WEB, font=wf)) / 2, py + 290), WEB, fill=mix(MUTED, pt), font=wf)
+                ep = fade(end_phone, pt)
+                img.paste(ep, (1050 - pbx[2], 1640 - pbx[3] + int((1 - pt) * 220)), ep)
+            ct = ease((et - 0.6) / 0.5)
+            if ct > 0:
+                cc = fade(cta_card, ct)
+                img.paste(cc, (70, 1000 + int((1 - ct) * 50)), cc)
 
         proc.stdin.write(img.tobytes())
 

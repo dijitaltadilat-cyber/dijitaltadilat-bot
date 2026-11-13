@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 import illus
+import sectors
 import render as R
 from render import F_BOLD, F_HEAD, F_SEMI, LIME, NAVY, PHONE, WEB, HANDLE, font, lockup
 
@@ -103,9 +104,13 @@ def screen_content(post, sw, sh):
     py0, py1 = y + 80, sh - 150
     photo = vgrad((sw, py1 - py0), (64, 50, 140), (24, 18, 56)).convert("RGBA")
     photo.alpha_composite(radial(photo.size, sw * 0.7, 80, 360, LIME, 70))
-    kind = illus.topic_of(post.get("headline", ""), post.get("body", ""), post.get("tag", "")) or "shop"
-    art, _ = illus.art3d(kind, scale=0.62)
-    art.thumbnail((int(sw * 0.82), int((py1 - py0) * 0.8)))
+    sec = sectors.sector_of(post)
+    if sec:
+        art = sectors.art(sec)
+    else:
+        kind = illus.topic_of(post.get("headline", ""), post.get("body", ""), post.get("tag", "")) or "shop"
+        art, _ = illus.art3d(kind, scale=0.62)
+    art.thumbnail((int(sw * 0.82), int((py1 - py0) * 0.8)), Image.LANCZOS)
     photo.alpha_composite(art, ((sw - art.size[0]) // 2, (py1 - py0 - art.size[1]) // 2 + 10))
     pd = ImageDraw.Draw(photo)
     pd.rounded_rectangle([sw - 230, photo.size[1] - 70, sw - 22, photo.size[1] - 22], radius=24, fill=LIME)
@@ -117,7 +122,8 @@ def screen_content(post, sw, sh):
     d.ellipse([100, iy, 140, iy + 38], outline=WHITE, width=4)
     d.polygon([(164, iy + 2), (206, iy + 18), (164, iy + 36), (172, iy + 18)], outline=WHITE, width=4)
     d.rounded_rectangle([sw - 70, iy, sw - 40, iy + 40], radius=4, outline=WHITE, width=4)
-    d.text((36, iy + 56), "Mahallenin yeni favorisi ✓".replace(" ✓", ""), fill=WHITE, font=font(F_BOLD, 24))
+    if not sec:
+        d.text((36, iy + 56), "Mahallenin yeni favorisi", fill=WHITE, font=font(F_BOLD, 24))
     return scr
 
 
@@ -285,6 +291,7 @@ def make_premium(post, out_path, idx=0):
     bubble(img, 556, 300, 118, 84, "dots")
     bubble(img, 590, 420, 96, 74, "person")
 
+
     # başlık (beyaz + lime) ve gövde
     white_part, lime_part = split_headline(post.get("headline", ""))
     maxw = 480
@@ -306,6 +313,17 @@ def make_premium(post, out_path, idx=0):
     for ln in bl:
         d.text((64, y), ln, fill=MUTED, font=bf)
         y += int(bf.size * 1.25)
+
+    # sektöre özel 3B nesne: telefonun önünde, kaidenin üstünde
+    sec = sectors.sector_of(post)
+    if sec:
+        hero = sectors.art(sec)
+        hero.thumbnail((400, max(160, min(300, 1062 - (y + 20)))), Image.LANCZOS)
+        cx = max(690, 560 + hero.size[0] // 2) if y + 20 > 1062 - hero.size[1] else 690
+        glow(img, lambda dd, c: dd.ellipse([cx - hero.size[0] // 2, 1060 - hero.size[1],
+                                            cx + hero.size[0] // 2, 1060], fill=c), VIOLET, 50, 90)
+        img.alpha_composite(hero, (cx - hero.size[0] // 2, 1062 - hero.size[1]))
+        d = ImageDraw.Draw(img)
 
     # özellik şeridi
     is_web = any(k in (post.get("tag", "") + post.get("label", "")).lower() for k in ("web", "yazılım", "yazilim", "site"))

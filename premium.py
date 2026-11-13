@@ -246,7 +246,7 @@ def fit_lines(d, text, fpath, size, maxw, maxlines, min_size=44):
     while size >= min_size:
         f = font(fpath, size)
         lines = R.wrap(d, text, f, maxw)
-        if len(lines) <= maxlines:
+        if len(lines) <= maxlines and all(d.textlength(ln, font=f) <= maxw for ln in lines):
             return f, lines
         size -= 4
     f = font(fpath, min_size)
